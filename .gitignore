@@ -43,8 +43,7 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# pkgdown site
-docs/
+# GitHub Pages site output is committed from docs/
 
 # translation temp files
 po/*~
@@ -237,6 +236,18 @@ cython_debug/
 # directories to ignore
 # Render intermediate script
 render.R
+
+# Local Quarto render artifacts outside the GitHub Pages docs folder
+.quarto/
+**/*.quarto_ipynb
+scripts/*.html
+scripts/*_files/
+scripts/.gitignore
+docs/index_files/
+
+# Local development material not needed by the focused GitHub repo
+scripts/report_v3.qmd
+scripts/old_scripts/
 
 # By default anything in the data
 # directory is ignored

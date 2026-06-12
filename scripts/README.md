@@ -1,9 +1,20 @@
-# Scripts 
+# Scripts
 
-The `scripts/` directory is intended to contain any scripts or code used for your analyses. This can include scripts for data wrangling, analyses, or any other code you used to generate your results. Did you write an awesome script or Rmd for your single-cell or spatial project? Did you create a script that produces a beautiful, bespoke figure? Add it here! 
+This directory contains the source code for the SomaSens quality-control and
+processing-sensitive protein scoring workflow.
 
-If you have a large amount of code, you may want to consider creating sub-directories within the `scripts/` directory to organize your code. For example, you could create separate directories for different types of analyses, abstract concepts, and/or visualizations; however, _this is not required!_ 
+## Main Workflow
 
-If possible, please take a few moments to comment your code. This will make it easier for others to understand. Let's try to create a resource that others can reference and learn from. We are all continuously learning and growing, and thanks to your contributions, we can create a resource that will help others learn and grow too!
+- `00_prepare_data.r`: read the local SomaScan ADAT file, merge phenotype
+  metadata, harmonize fields used downstream, and save `data/adata_meta.rds`.
+- `01_cluster_diagnosis.r`: compare unexplained sample clusters against
+  SomaLogic processing-sensitive protein signatures.
+- `02_fedfast_scoring.r`: calculate fed-fasted scores using both log2 fold
+  change thresholding and independent protein selection.
+- `03_de_analysis.r`: run differential-expression models after score-based
+  filtering, including the Dream split-eBayes workflow used in the report.
+- `index.qmd`: Quarto source for the rendered GitHub Pages documentation.
 
-> _**Reminder:**_ Please don't forget to edit the `packages.R` (R dependencies) and the `requirements.txt` (python dependencies) files to include any R/python packages that are required to run your scripts. This will help ensure that others can easily reproduce your work.
+The older development report and exploratory scripts are not required for the
+focused GitHub workflow. The reusable pieces have been moved into the scripts
+listed above.

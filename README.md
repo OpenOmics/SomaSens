@@ -1,81 +1,48 @@
-<div align="center">
-   
-  <h1>IC-123 🔬</h1>
-  
-  **_Data and script for processing IC-123_**
+# SomaSens
 
-</div>
+SomaSens is a focused workflow for diagnosing and handling pre-analytical
+variation in SomaScan proteomics data. The current version concentrates on
+quality-control diagnostics and scoring for processing-sensitive proteins,
+with a worked example based on a multi-site asthma SomaScan study.
 
-# Overview
+The rendered documentation is designed for GitHub Pages:
 
-This repository contains data and scripts for analyzing IC-123. 
+https://spaul-genetics.github.io/SomaSens/
 
-Any data accompanying this project can be stored in the `data/` directory, while any scripts used to process the data can be stored in the `scripts/` directory.
+## What This Repository Contains
 
-> [!NOTE]  
-> _**By default**, any data or files added to the `data/` directory are ignored by git due to our `.gitignore`, so you can store large files or data here without worrying about them being uploaded to Github._ If you would to upload a small data file (<5MB) to Github, you can stage the file using force, `-f`, option to the `git add`:  
-> ```bash
-> # Stage file for commit
-> git add -f data/counts.tsv
-> # Commit the file to history
-> git commit -m "Adding small counts matrix"
-> ```
+- `scripts/00_prepare_data.r`: prepare the SomaScan ADAT object and phenotype metadata.
+- `scripts/01_cluster_diagnosis.r`: diagnose unexplained sample clusters using processing-sensitive protein lists.
+- `scripts/02_fedfast_scoring.r`: calculate fed-fasted scores using thresholding and independent protein selection.
+- `scripts/03_de_analysis.r`: run the focused differential-expression workflow after score-based filtering.
+- `scripts/index.qmd`: source document for the GitHub Pages report.
+- `data/README.md`: expected input files and generated local cache files.
+- `packages.R`: R package dependencies needed to reproduce the workflow.
 
-<!--
-Please add some more information about the project here. This can be copied directly from the project description. Also please update any references to IC-123 to the correct project identifer. For example: NCBR-123, NHLBI-123, NIAMS-123, etc. 
+Raw SomaScan ADAT files, phenotype spreadsheets, SomaLogic processing-sensitive
+protein files, and generated `.rds` caches are intentionally not committed to
+GitHub. Place those files under `data/` as described in `data/README.md`.
 
-The easiest way to do this is with sed or find/replace in your text editor. Please feel free to also delete or keep any in this file. This is just a template to get you started, and you can modify it as needed. At the end of the day, this is your project and you can structure it however you like!
+## Render The Documentation
 
-```bash
-# On biowulf/helix,
-# Example sed commnad on linux,
-# this can be run on Biowulf
-sed -i 's/IC-123/NCBR-123/g' README.md
-
-# On local laptop,
-# Example sed on macOSX,
-# this can be run on your local machine
-sed -i '' 's/IC-123/NCBR-123/g' README.md
-```
--->
-
-## Installation
-
-To install the repository locally, you can use the following command:
+From the repository root:
 
 ```bash
-# Clone the github repository
-# and change your working directory
-git clone https://github.com/OpenOmics/IC-123.git
-cd IC-123/
+quarto render scripts/index.qmd --output-dir ../docs --cache-refresh
 ```
 
-## Setup your environment
+The command writes the GitHub Pages-ready HTML to `docs/index.html`. The
+rendered HTML is committed so the site can be served directly from the
+`main` branch using the `/docs` folder.
 
-To setup your environment and download any missing packages, you can use the following command:
+## Setup
+
+Install the R dependencies with:
 
 ```bash
-# Install any missing or 
-# required python packages
-# in a virtual environment
-python -m venv .venv
-source .venv/bin/activate
-pip install -U pip
-pip install -r requirements.txt
-
-# Install any missing R packages
 ./packages.R
 ```
 
-<!--
-## Reproduce the analyses
-
-This is where you can add any steps to reproduce the analyses. For example, you can add the following command to run the script:
-
-```bash
-# Add any steps here to 
-# reproduce the analyses
-./scripts/deg.R -i data/counts.tsv -s data/sample_sheet.tsv -o results/
-./scripts/heatmap.py -i results/deg.tsv --fc 2 --fdr 0.05 -o results/figures/
-```
--->
+The analysis expects the local data files described in `data/README.md`.
+Because these files can be large or controlled-access, they remain local and
+are ignored by git.

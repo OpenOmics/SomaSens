@@ -1,0 +1,578 @@
+---
+title: "SomaSens"
+subtitle: "Diagnosing and Handling Pre-Analytical Variation in SomaScan Proteomics"
+author: "Subrata Paul"
+format:
+  html:
+    toc: true
+    toc-location: left
+    toc-depth: 3
+    number-sections: true
+    smooth-scroll: true
+    code-fold: true
+    highlight-style: tango
+    theme: cosmo
+    embed-resources: true
+execute:
+  echo: true
+  message: false
+  warning: false
+  cache: true
+---
+
+## Overview
+
+SomaScan is a high-throughput aptamer-based proteomics platform capable of
+measuring thousands of proteins simultaneously. Like all omics platforms,
+SomaScan measurements are susceptible to pre-analytical variation introduced
+during sample collection, handling, and storage. When such variation is
+systematic — affecting a subset of samples differently — it can produce
+spurious clusters in the data that are unrelated to the biological question
+of interest.
+
+This resource documents a set of diagnostic and remediation strategies for
+identifying and handling pre-analytical variation in SomaScan data. The
+methods are illustrated with examples from a multi-site asthma proteomics
+study, but the approach generalises to any SomaScan dataset where sample
+quality or processing history is a concern.
+
+The SomaLogic-provided lists of processing-sensitive proteins (fed-fasted
+state, freeze-thaw cycles, time to spin, time to decant, time to freeze) are
+central to these methods. These lists are not redistributed here; they can be
+obtained directly from SomaLogic. See the
+[`data/README.md`](https://github.com/spaul-genetics/SomaSens/blob/main/data/README.md)
+file for instructions on where to place them once obtained.
+
+The examples in this resource use plasma SomaScan data from a multi-site
+asthma proteomics study. The samples came from several collection sites, and
+the unexplained split that motivated this workflow was most visible within the
+Denver samples. I use Denver as the main worked example because that is where
+the clustering problem was clearest. The methods themselves are not specific
+to Denver; the same diagnostic and scoring steps can be applied to other
+SomaScan datasets where sample handling or fasting status may have introduced
+systematic structure.
+
+---
+
+## Diagnosing the Cause of Unexplained Sample Clusters {#sec-diagnosis}
+
+### Motivation
+
+After standard pre-processing and quality control, SomaScan data are often
+subjected to dimensionality reduction (e.g., PCA) and unsupervised clustering
+(e.g., k-means) to assess overall sample structure. In some datasets, two or
+more clusters emerge that cannot be attributed to the primary experimental
+variable (disease status, treatment arm, etc.) or to known technical factors
+such as assay batch or collection site.
+
+When this occurs, a natural question is: could a pre-analytical processing
+difference — such as whether samples were collected from fasted or fed
+subjects, or experienced different freeze-thaw histories — be responsible?
+
+### Diagnostic Approach
+
+SomaLogic provides, upon request, lists of proteins whose abundances are
+known to change substantially under specific pre-analytical conditions. For
+each condition, the list contains proteins along with their log2 fold change
+relative to a reference condition (e.g., protein abundance after 12 hours of
+fasting relative to the fed baseline).
+
+The diagnostic approach works as follows:
+
+1. **Quantify the between-cluster signal.** For each protein, fit a linear
+   regression of log2 RFU on cluster assignment, adjusting for relevant
+   covariates (age, sex, disease status, ancestry PCs, assay batch). The
+   resulting beta coefficient for the cluster term captures the direction and
+   magnitude of each protein's difference between the two clusters.
+
+2. **Compare to the processing-sensitive protein lists.** For each processing
+   condition, plot the known processing-induced log2 fold change (x-axis)
+   against the observed between-cluster beta coefficient (y-axis).
+
+3. **Interpret the concordance.** If a processing condition is responsible for
+   the clustering, its sensitive proteins should fall predominantly in
+   quadrants I (both positive) and III (both negative) of this plot — meaning
+   proteins that go up under that processing condition are also more abundant
+   in one cluster, and proteins that go down are less abundant in that cluster.
+   A pattern scattered across all four quadrants indicates that condition is
+   not the driver.
+
+### Example
+
+The figure below shows this diagnostic applied to a subset of samples that
+formed two clusters unexplained by experimental variables. Each panel
+corresponds to one processing condition. The x-axis shows the known
+processing-induced log2 fold change provided by SomaLogic; the y-axis shows
+the observed cluster beta from the linear regression. Point size and colour
+encode statistical significance (−log₁₀ adjusted p-value). To focus on the
+most sensitive markers, each panel shows the five proteins with the largest
+positive processing effect and the five proteins with the largest negative
+processing effect, ranked by the x-axis fold-change column.
+
+```{r}
+#| label: fig-diag
+#| fig-cap: >
+#|   Diagnostic comparison of processing-sensitive protein fold changes
+#|   (x-axis, from SomaLogic) versus observed between-cluster beta
+#|   coefficients (y-axis). Each panel shows the five most positive and five
+#|   most negative processing-sensitive proteins ranked by the SomaLogic
+#|   x-axis fold-change column. Concordance in quadrants I and III implicates
+#|   that condition as the likely driver of the sample clustering. In this
+#|   example, only the Fed-Fasted State panel shows clear concordance,
+#|   indicating that fasting status drove the observed clusters.
+#| fig-width: 12
+#| fig-height: 8
+
+# ── Data requirement ──────────────────────────────────────────────────────────
+# 01_cluster_diagnosis.r needs either:
+#   (a) a pre-computed cache at data/de_cluster_results.rds  (fast path), OR
+#   (b) an object called `adata_meta` already in the R environment.
+#
+# `adata_meta` must be a log2-transformed SomaScan ADAT joined with sample
+# metadata, filtered to biological samples, and augmented with a 'Cluster'
+# column ('Big' / 'Small') from a prior k-means step.
+#
+# To use the fast path, run 01_cluster_diagnosis.r once interactively with
+# adata_meta loaded; it will write data/de_cluster_results.rds automatically.
+# Subsequent renders (including this page) will read that cache instead.
+# ─────────────────────────────────────────────────────────────────────────────
+
+library(here)
+source(here::here("scripts/01_cluster_diagnosis.r"))
+print(diag_figure)
+```
+
+### Interpreting the Results
+
+In the example above, only the **Fed-Fasted State** panel shows clear
+concordance: proteins known to increase after fasting (positive
+`Time_12_hours` fold change) were consistently more abundant in one cluster,
+and proteins known to decrease after fasting were consistently less abundant
+in that cluster. No such pattern was observed for freeze-thaw cycles, time to
+spin, time to decant, or time to freeze.
+
+This pattern strongly suggests that a subset of samples were collected from
+subjects in a fasted state, while the remainder were collected from fed
+subjects, and that this biological/pre-analytical difference — rather than
+disease status or technical batch effects — is responsible for the clustering.
+
+### Data Requirements
+
+To run this diagnostic in your own dataset you need:
+
+- **Log2-transformed SomaScan data** with a cluster assignment column
+  (`Big` / `Small`, or equivalent) obtained from a prior clustering step.
+- **SomaLogic processing-sensitive protein lists** (CSV format, one file per
+  condition). These are available from SomaLogic upon request and should be
+  placed in the `data/` directory of this repository. They are excluded from
+  version control; see
+  [`data/README.md`](https://github.com/spaul-genetics/SomaSens/blob/main/data/README.md).
+- **Sample metadata** including any covariates to be included in the linear
+  model (e.g., age, sex, disease status, ancestry PCs, assay batch).
+
+The annotated R script implementing this diagnostic is available at
+[`scripts/01_cluster_diagnosis.r`](https://github.com/spaul-genetics/SomaSens/blob/main/scripts/01_cluster_diagnosis.r).
+
+---
+
+## Fed-Fasted Score Calculation {#sec-fed_fast_score}
+
+### Motivation
+
+The diagnostic plot above tells us which processing condition best matches
+the unexplained sample clustering. In this example, the Fed-Fasted State panel
+showed the clearest concordance: proteins known to increase after fasting were
+also higher in one of the sample clusters, and proteins known to decrease
+after fasting were lower in that same cluster.
+
+After seeing that pattern, the next useful step is to turn the protein-level
+signal into a sample-level score. The goal of the score is simple: for each
+sample, estimate how strongly its protein profile looks like the fasted
+pattern described by the SomaLogic fed-fasted experiment.
+
+### Score Definition
+
+For both scoring strategies below, I use the same weighted score. Let
+`R_sp` be the log2 RFU for sample `s` and protein `p`, let `mean(R_p)` be the
+mean log2 RFU for protein `p` across samples, and let `beta_p` be the
+SomaLogic fed-fasted effect size from `Time_12_hours`.
+
+The score for sample `s` is:
+
+$$
+S_s = \sum_{p \in P} (R_{sp} - \bar{R}_p) \times \beta_p
+$$
+
+Here, `P` is the selected set of fed-fasted sensitive proteins. Centering each
+protein first makes the score depend on whether a sample is high or low for
+that protein relative to the dataset. Multiplying by `Time_12_hours` preserves
+the direction of the fasting effect. A protein that increases after fasting
+gets a positive weight, while a protein that decreases after fasting gets a
+negative weight. In this way, both types of proteins contribute in the same
+biological direction to the final score.
+
+The early analysis used a short top-10 protein list because that was the only
+list available at first. That approach is not used here. The focused workflow
+below assumes the full fed-fasted sensitive protein table is available.
+
+### Strategy 1: Effect-Size Thresholding
+
+The first strategy is to keep fed-fasted proteins with stronger SomaLogic
+effect sizes. Starting from the full fed-fasted CSV, we keep proteins with a
+non-missing `Time_12_hours` value and then apply a threshold to the absolute
+log2 fold change:
+
+$$
+|\beta_p| \geq c
+$$
+
+where `c` is the chosen effect-size cutoff. In the report analysis, I scanned
+several cutoffs based on the distribution of `abs(Time_12_hours)` and compared
+the resulting score to the major PCA axis that captured the unexplained
+sample split. The score remained strong when proteins with
+`abs(Time_12_hours) >= 0.25` were used, while weaker-effect proteins were more
+likely to add noise. For that reason, `0.25` is a practical default for this
+example, not a universal rule.
+
+This thresholding strategy is easy to understand and easy to reproduce. It
+asks only one question: which proteins have a large enough known fed-fasted
+effect that they should be trusted in the score?
+
+### Strategy 2: Independent Protein Selection
+
+The second strategy tries to avoid giving too much influence to groups of
+highly correlated proteins. This is similar in spirit to clumping in PLINK.
+In polygenic risk score analysis, clumping keeps the strongest genetic
+variant in a correlated group and removes nearby variants that are in high
+linkage disequilibrium. The aim is to keep the strongest signal without
+counting the same correlated information many times.
+
+Here the objects are proteins rather than genetic variants, so there is no
+genomic window. Instead, I rank proteins by the absolute value of their
+SomaLogic fed-fasted effect size and remove proteins that are highly
+correlated with a protein already selected for the score. The algorithm is:
+
+1. Start with fed-fasted proteins with non-missing `Time_12_hours`.
+2. Select the remaining protein with the largest `abs(Time_12_hours)`.
+3. Remove other remaining proteins whose expression correlation with that
+   selected protein is above the chosen threshold.
+4. Repeat until no proteins remain.
+5. Calculate the same weighted score using only the retained proteins.
+
+I call the result an independent protein score. The word "independent" is
+practical rather than absolute: the retained proteins are not guaranteed to be
+statistically independent, but they are less redundant under the chosen
+correlation threshold.
+
+In this example, the correlation matrix used for clumping is estimated from
+all sites except Denver. That choice matters. Denver is the site where the
+fed-fasted-like split was most visible, so including Denver when estimating
+protein-protein correlations can make proteins look correlated because of the
+very artifact we are trying to measure. Using the non-Denver samples gives a
+cleaner reference for deciding which proteins are redundant.
+
+Several correlation thresholds can be tried, such as `0.60`, `0.75`, `0.80`,
+and `0.90`. A lower threshold gives a smaller and less redundant protein set;
+a higher threshold keeps more proteins and behaves more like the full
+fed-fasted list. In the original analysis, correlation calculated without
+Denver gave better separation of the suspected fed-fasted groups, especially
+around the `0.75` threshold.
+
+### Correlation Diagnostics
+
+Before using the score, I like to look at the correlation structure of the
+selected proteins. The first plot shows the proteins retained by the simple
+`abs(Time_12_hours) >= 0.25` rule. The independent-protein tabs show the
+clumping-like selection at several correlation thresholds. In all plots, the
+upper triangle uses correlations calculated from all samples, while the lower
+triangle uses correlations calculated after excluding Denver.
+
+```{r}
+#| label: setup-fedfast-scoring
+#| include: false
+
+source(here::here("scripts/02_fedfast_scoring.r"))
+```
+
+::: {.panel-tabset}
+
+#### Log2 FC > 0.25
+
+```{r}
+#| label: fig-fedfast-cor-threshold-025
+#| fig-cap: >
+#|   Correlation among fed-fasted proteins selected by absolute SomaLogic
+#|   Time_12_hours log2 fold-change threshold of 0.25. The upper triangle uses
+#|   all samples and the lower triangle excludes Denver. Red labels indicate
+#|   proteins higher after fasting; blue labels indicate proteins lower after
+#|   fasting.
+#| echo: false
+#| fig-width: 9
+#| fig-height: 8
+
+plot_logfc_threshold_correlation(threshold = 0.25)
+```
+
+#### Independent: cor < 0.60
+
+```{r}
+#| label: fig-fedfast-cor-independent-060
+#| fig-cap: >
+#|   Color-coded correlation plot for independent fed-fasted protein selection
+#|   using correlation threshold 0.60. The upper triangle uses all samples and
+#|   the lower triangle excludes Denver. Red labels indicate proteins selected
+#|   only when Denver is excluded, blue labels indicate proteins selected only
+#|   when all samples are used, and purple labels indicate proteins selected in
+#|   both cases.
+#| echo: false
+#| fig-width: 10
+#| fig-height: 9
+
+plot_independent_correlation(cor_threshold = 0.60)
+```
+
+#### Independent: cor < 0.75
+
+```{r}
+#| label: fig-fedfast-cor-independent-075
+#| fig-cap: >
+#|   Color-coded correlation plot for independent fed-fasted protein selection
+#|   using correlation threshold 0.75. The upper triangle uses all samples and
+#|   the lower triangle excludes Denver. Red labels indicate proteins selected
+#|   only when Denver is excluded, blue labels indicate proteins selected only
+#|   when all samples are used, and purple labels indicate proteins selected in
+#|   both cases.
+#| echo: false
+#| fig-width: 10
+#| fig-height: 9
+
+plot_independent_correlation(cor_threshold = 0.75)
+```
+
+#### Independent: cor < 0.95
+
+```{r}
+#| label: fig-fedfast-cor-independent-095
+#| fig-cap: >
+#|   Color-coded correlation plot for independent fed-fasted protein selection
+#|   using correlation threshold 0.95. The upper triangle uses all samples and
+#|   the lower triangle excludes Denver. Red labels indicate proteins selected
+#|   only when Denver is excluded, blue labels indicate proteins selected only
+#|   when all samples are used, and purple labels indicate proteins selected in
+#|   both cases.
+#| echo: false
+#| fig-width: 10
+#| fig-height: 9
+
+plot_independent_correlation(cor_threshold = 0.95)
+```
+
+:::
+
+### Using The Score
+
+Once the score is calculated, I use it as a QC summary of the fed-fasted
+signal. A two-component Gaussian mixture model can be fit to the score to
+identify samples with higher fasted-like signal versus lower fasted-like
+signal. Those labels can then be compared to PCA clusters, collection site,
+and other metadata.
+
+The plots below show the GMM fit for each score. The histogram shows the
+score distribution, the black curves show the two fitted mixture components,
+and the colored density curves show how the existing k-means clusters are
+distributed along the score. The small table inside each plot summarizes how
+many samples from each k-means cluster fall into the lower-score and
+higher-score GMM groups.
+
+::: {.panel-tabset}
+
+#### Log2 FC > 0.25
+
+```{r}
+#| label: fig-fedfast-gmm-threshold-025
+#| fig-cap: >
+#|   Gaussian mixture model fit of the fed-fasted score calculated using
+#|   proteins with absolute SomaLogic Time_12_hours log2 fold change greater
+#|   than or equal to 0.25.
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5.8
+
+plot_score_gmm(
+  score_from_logfc_threshold(0.25),
+  title = "GMM of score using |Time_12_hours| >= 0.25 proteins"
+)
+```
+
+#### Independent: cor < 0.60
+
+```{r}
+#| label: fig-fedfast-gmm-independent-060
+#| fig-cap: >
+#|   Gaussian mixture model fit of the fed-fasted score calculated using
+#|   independent proteins selected with correlation threshold 0.60. Protein
+#|   correlations used for selection were calculated after excluding Denver.
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5.8
+
+plot_score_gmm(
+  score_from_independent_proteins(cor_threshold = 0.60),
+  title = "GMM of independent-protein score, cor < 0.60"
+)
+```
+
+#### Independent: cor < 0.75
+
+```{r}
+#| label: fig-fedfast-gmm-independent-075
+#| fig-cap: >
+#|   Gaussian mixture model fit of the fed-fasted score calculated using
+#|   independent proteins selected with correlation threshold 0.75. Protein
+#|   correlations used for selection were calculated after excluding Denver.
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5.8
+
+plot_score_gmm(
+  score_from_independent_proteins(cor_threshold = 0.75),
+  title = "GMM of independent-protein score, cor < 0.75"
+)
+```
+
+#### Independent: cor < 0.95
+
+```{r}
+#| label: fig-fedfast-gmm-independent-095
+#| fig-cap: >
+#|   Gaussian mixture model fit of the fed-fasted score calculated using
+#|   independent proteins selected with correlation threshold 0.95. Protein
+#|   correlations used for selection were calculated after excluding Denver.
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5.8
+
+plot_score_gmm(
+  score_from_independent_proteins(cor_threshold = 0.95),
+  title = "GMM of independent-protein score, cor < 0.95"
+)
+```
+
+:::
+
+### Sample Filtering vs. Covariate Adjustment
+
+After identifying samples with high fed-fasted score, there are two practical
+ways to use this information in the downstream analysis.
+
+The first option is sample filtering. In this approach, samples assigned to
+the higher fed-fasted-score GMM group are removed before differential
+expression analysis. This is useful when the score identifies a distinct
+subset of samples that appears to be affected by a pre-analytical difference
+rather than by the main biological question. The advantage is that we are not
+asking the statistical model to repair a strong handling artifact after the
+fact. The tradeoff is that we lose samples, and this can reduce power or
+change the analysis population if the removed samples are not evenly
+distributed across phenotypes, sites, or other study variables.
+
+The second option is covariate adjustment. In this approach, all samples are
+kept, and the fed-fasted score, or sometimes the GMM class based on the score,
+is included as a covariate in the model. This can be attractive when the total
+sample size is limited, when the score varies continuously rather than forming
+a clear outlier group, or when filtering would remove too many samples from an
+important subgroup. The tradeoff is that adjustment assumes the score captures
+the processing effect in a way the model can handle. If the affected samples
+form a strong separate cluster, or if the processing signal is highly
+heterogeneous, a single covariate may not fully remove the artifact.
+
+So I do not think there is one universal choice. The decision depends on the
+experiment, the total number of samples, how much heterogeneity is present,
+and how strongly the score is tangled with the biology we want to test. In
+this example, the score and the PCA/k-means structure pointed to a smaller
+group of samples with a clear fed-fasted-like signal. We found that filtering
+was the better option for this dataset, so the smaller high-score group was
+filtered out before the downstream differential expression analysis.
+
+---
+
+## Differential Expression After Fed-Fasted Filtering {#sec-de}
+
+After filtering the smaller high-score group, the next question is how to run
+the differential expression analysis. The data here are already normalized
+SomaScan RFU values on the log2 scale, so we can use linear modeling methods
+directly on the protein abundance matrix.
+
+This is where `limma` is still a reasonable baseline model. We are not using
+`voom` here because `voom` was designed mainly for RNA-seq-style count data,
+where the mean-variance relationship is tied to count sampling and negative
+binomial-like behavior. SomaScan RFU values are not read counts. After the
+SomaScan normalization steps and log2 transformation, the working data are
+continuous protein abundance measurements, so the ordinary limma linear model
+with empirical Bayes variance moderation is appropriate as a fixed-effect
+baseline.
+
+However, this study includes samples from multiple sites. We saw earlier that
+site contributed a large amount of structure to the proteomic data. A fixed
+effect model can include site as a covariate, but that is not always the best
+way to represent site-to-site heterogeneity, especially when the sites are
+better thought of as sampled study centers with their own background shifts.
+For that reason, we also tested random-effect models where site is included
+as a random intercept.
+
+The cleaned model helpers are in
+[`scripts/03_de_analysis.r`](https://github.com/spaul-genetics/SomaSens/blob/main/scripts/03_de_analysis.r).
+That script was organized from the older development scripts and contains:
+
+- `fit_limma_model()` for the fixed-effect limma analysis without `voom`.
+- `fit_dream_model()` for the mixed-effect Dream analysis with site as a
+  random effect.
+- `fit_lmer_test_model()` for a per-protein `lmerTest` comparison model.
+- `fit_lmer_seq_model()` as an optional placeholder for the `lmerSeq`
+  comparison used in the development report.
+- `run_dream_indep075_filter()` for the worked example used below.
+- `volcano_break_axis()` and `plot_indep075_dream_volcano()` for the volcano
+  plot.
+
+We compared these approaches in the full analysis report. The important
+pattern was that modeling site as a random effect improved the signal compared
+with the fixed-effect limma baseline. Among the random-effect approaches,
+Dream was the most useful for this workflow because it combines linear mixed
+models with limma-style empirical Bayes moderation.
+
+We also used split eBayes in the Dream framework. SomaScan proteins are
+measured in different dilution groups, and the technical variance structure is
+not necessarily the same across those groups. Applying empirical Bayes
+moderation separately within each dilution group lets the variance borrowing
+happen within a more comparable set of measurements. In our analysis, this
+split eBayes Dream model was more powerful than the alternatives we tested.
+The longer development report was used to compare these options while building
+this focused repository; the reproducible pieces needed for the GitHub version
+are kept in the cleaned scripts above.
+
+The volcano plot below shows the focused result used in this repo: Dream with
+split eBayes after filtering samples by the independent fed-fasted score at
+correlation threshold `0.75`. IgE is an outlying signal in both dimensions: it
+has a very large log2 fold change on the x-axis and a very large
+`-log10` adjusted p-value on the y-axis. In a usual single-scale volcano plot,
+this stretches the axes so much that the remaining proteins are compressed into
+a small part of the figure. For that reason, we used a customized volcano plot
+with broken/faceted axes so that the IgE result remains visible while the rest
+of the differential-expression pattern can still be inspected.
+
+```{r}
+#| label: fig-de-dream-indep075-volcano
+#| fig-cap: >
+#|   Volcano plot for Active Asthma differential expression after filtering
+#|   the higher-score GMM group identified from the independent fed-fasted
+#|   score at correlation threshold 0.75. The model is Dream with site as a
+#|   random effect and split empirical Bayes moderation by SomaScan dilution
+#|   group. Customized axis breaks are used because the IgE log2 fold change
+#|   and adjusted significance are much larger than the rest of the proteins.
+#| echo: false
+#| fig-width: 10
+#| fig-height: 7
+
+source(here::here("scripts/03_de_analysis.r"))
+de_indep075 <- run_dream_indep075_filter()
+plot_indep075_dream_volcano(de_indep075)
+```

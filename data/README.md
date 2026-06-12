@@ -1,14 +1,139 @@
 # Data
 
-The `data/` directory is intended to contain any small reference files or data to reproduce the results. By default, anything added to this directory will be ignored by `git` via our `.gitignore`. This is to ensure large files or any other sensitive data are not accidently committed. If you would like to include a large file (>=5MB), please contact the repository owner discuss the best way to include this data.
+This directory contains local data files needed to reproduce the SomaSens QC
+and processing-sensitive protein diagnostic workflow. The data files are
+intentionally ignored by Git; only this README is tracked. After cloning the
+repository, recreate the structure below and place the required files at the
+exact paths used by the scripts.
 
-If you would like to include data in this directory, you can do so by running the following command:
+## Files Required By The Scripts
 
-```bash
-# Example git command to add a file
-# in this directory, by default git 
-# will ignore anything in this folder. 
-# You can override this behavior by 
-# using the -f flag with the git add
-git add -f data/counts.tsv
+### SomaScan ADAT
+
+Required by `scripts/00_prepare_data.r`:
+
+```text
+data/CHI-24-013_v5.0_EDTAPlasma.hybNorm.medNormInt.plateScale.calibrate.anmlQC.qcCheck.anmlSMP.adat
 ```
+
+This should be the fully normalized SomaScan ADAT file. The script expects the
+ADAT metadata to include `SampleId`, `SampleType`, and `PlatePosition`.
+`SampleId` is used to join phenotype metadata, `SampleType` is used to retain
+biological samples, and `PlatePosition` is used when removing known duplicate
+samples.
+
+### Phenotype Metadata
+
+Required by `scripts/00_prepare_data.r`:
+
+```text
+data/Final_486_phenotype_merged_07242025.xlsx
+```
+
+This file is read as the phenotype/sample metadata table and joined to the ADAT
+by sample ID. The current repo workflow only requires the phenotype columns
+referenced by the focused QC, scoring, and differential-expression scripts;
+variables used only in the broader development analysis are intentionally
+omitted here.
+
+| Column in file | Script name | Used by | Use |
+| --- | --- | --- | --- |
+| `SID` | `SampleId` | `00_prepare_data.r` | Renamed by `PHENO_RENAME`; must match ADAT `SampleId` values. |
+| `Reported Sex` | `Sex` | `00_prepare_data.r`, `01_cluster_diagnosis.r`, `03_de_analysis.r` | Renamed by `PHENO_RENAME`; model covariate and factor variable. |
+| `site` | `site` | `01_cluster_diagnosis.r`, `02_fedfast_scoring.r`, `03_de_analysis.r` | Used for the Denver diagnostic example, reference-sample correlation calculation, and site random effect. |
+| `Active_Asthma` | `Active_Asthma` | `01_cluster_diagnosis.r`, `03_de_analysis.r` | Model covariate in the cluster diagnostic and phenotype in differential expression. |
+| `Age` | `Age` | `01_cluster_diagnosis.r`, `03_de_analysis.r` | Model covariate. |
+| `full_PC1` | `full_PC1` | `00_prepare_data.r`, `01_cluster_diagnosis.r`, `03_de_analysis.r` | Converted to numeric; model covariate. |
+| `full_PC2` | `full_PC2` | `00_prepare_data.r`, `01_cluster_diagnosis.r`, `03_de_analysis.r` | Converted to numeric; model covariate. |
+| `SomascanBatch` | `SomascanBatch` | `01_cluster_diagnosis.r` | Model covariate and factor variable. |
+
+Extra phenotype columns may remain in the Excel file, but they are not required
+for this focused QC and processing-sensitive protein workflow unless future
+repo scripts explicitly reference them.
+
+The `Cluster` variable is not expected in the phenotype file. It is generated
+inside `scripts/00_prepare_data.r` by k-means clustering and added to
+`adata_meta`.
+
+### Shipment Metadata
+
+Optional, but referenced by `scripts/00_prepare_data.r`:
+
+```text
+data/CHI-24-013_Shipment_Wave_Information_26AUG2025_TL.xlsx
+```
+
+If present, this file is read and left-joined to the phenotype table by sample
+ID. The script accepts either `Final SID` or `SampleId` as the sample identifier
+column and drops a `Barcode` column if present. If this file is absent, the
+script skips this join.
+
+### SomaLogic Processing-Sensitive Protein Lists
+
+Required by `scripts/01_cluster_diagnosis.r`. Place these files in:
+
+```text
+data/PAV_Plasma_wSpecSheet/
+```
+
+Exact CSV filenames used in the current analysis:
+
+| Condition | Required CSV | Effect-size column plotted |
+| --- | --- | --- |
+| Fed-fasted state | `fed-fasted_plasma_effect-sizes.csv` | `Time_12_hours` |
+| Freeze-thaw cycles | `freeze-thaw_plasma_effect-sizes.csv` | `cycle_10` |
+| Time to decant | `time-to-decant_plasma_effect_sizes.csv` | `Time_24_hours` |
+| Time to freeze | `time-to-freeze_plasma_effect-sizes.csv` | `Time_24_hours` |
+| Time to spin | `time-to-spin_plasma_effect_sizes.csv` | `Time_24_hours` |
+
+Each processing CSV must contain `SeqId` so it can be joined to the SomaScan
+differential-expression results. The current files also contain `UniProt`,
+`TargetFullName`, and one or more processing effect-size columns.
+
+## Generated Cache Files
+
+These files are created by the scripts and do not need to be supplied before a
+first run:
+
+```text
+data/adata_meta.rds
+data/de_cluster_results.rds
+data/de_dream_indep075_filter.rds
+```
+
+`adata_meta.rds` is generated by `scripts/00_prepare_data.r`.
+`de_cluster_results.rds` is generated by `scripts/01_cluster_diagnosis.r`.
+`de_dream_indep075_filter.rds` is generated by `scripts/03_de_analysis.r`.
+Keeping these files locally speeds up future renders, but they should not be
+committed.
+
+## Current Local Data Tree
+
+The local `data/` directory currently has this structure:
+
+```text
+data/
+|-- README.md
+|-- CHI-24-013_v5.0_EDTAPlasma.hybNorm.medNormInt.plateScale.calibrate.anmlQC.qcCheck.anmlSMP.adat
+|-- Final_486_phenotype_merged_07242025.xlsx
+|-- adata_meta.rds
+|-- de_cluster_results.rds
+|-- de_dream_indep075_filter.rds
+`-- PAV_Plasma_wSpecSheet/
+    |-- fed-fasted_plasma_effect-sizes.csv
+    |-- freeze-thaw_plasma_effect-sizes.csv
+    |-- time-to-decant_plasma_effect_sizes.csv
+    |-- time-to-freeze_plasma_effect-sizes.csv
+    |-- time-to-spin_plasma_effect_sizes.csv
+    |-- RUO_Fed-Fasted(Plasma)_Test Information Guide.PDF
+    |-- RUO_Freeze-ThawCycles(Plasma)_Test Information Guide.PDF
+    |-- RUO_Time-to-Decant (Serum)_Test Information Guide.PDF
+    |-- RUO_Time-to-Spin(Serum)_Test Information Guide.PDF
+    |-- RUO_TimetoDecant(Plasma)_Test Information Guide.PDF
+    |-- RUO_TimetoFreeze(Plasma)_Test Information Guide.PDF
+    |-- RUO_TimetoFreeze(Serum)_Test Information Guide.PDF
+    `-- RUO_TimetoSpin(Plasma)_Test Information Guide.PDF
+```
+
+The PDF test information guides are local reference documents and are not read
+by the current scripts.
