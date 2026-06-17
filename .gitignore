@@ -45,6 +45,10 @@ vignettes/*.pdf
 
 # GitHub Pages site output is committed from docs/
 
+# Local standalone report for private collaborator sharing
+/SomaSens_standalone.html
+/SomaSens_collaborator_report.html
+
 # translation temp files
 po/*~
 

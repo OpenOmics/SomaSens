@@ -2,6 +2,7 @@
 title: "SomaSens"
 subtitle: "Diagnosing and Handling Pre-Analytical Variation in SomaScan Proteomics"
 author: "Subrata Paul"
+bibliography: ../references.bib
 format:
   html:
     toc: true
@@ -23,12 +24,13 @@ execute:
 ## Overview
 
 SomaScan is a high-throughput aptamer-based proteomics platform capable of
-measuring thousands of proteins simultaneously. Like all omics platforms,
-SomaScan measurements are susceptible to pre-analytical variation introduced
-during sample collection, handling, and storage. When such variation is
-systematic — affecting a subset of samples differently — it can produce
-spurious clusters in the data that are unrelated to the biological question
-of interest.
+measuring thousands of proteins simultaneously [@candia2025somascan]. Like other
+blood-based proteomic assays, SomaScan measurements can be sensitive to
+pre-analytical variation introduced during sample collection, processing,
+handling, and storage [@tatsumi2026preanalytical; @candia2025hemolysis]. When
+such variation is systematic — affecting a subset of samples differently — it
+can produce spurious clusters in the data that are unrelated to the biological
+question of interest.
 
 This resource documents a set of diagnostic and remediation strategies for
 identifying and handling pre-analytical variation in SomaScan data. The
@@ -79,23 +81,26 @@ fasting relative to the fed baseline).
 
 The diagnostic approach works as follows:
 
-1. **Quantify the between-cluster signal.** For each protein, fit a linear
-   regression of log2 RFU on cluster assignment, adjusting for relevant
-   covariates (age, sex, disease status, ancestry PCs, assay batch). The
-   resulting beta coefficient for the cluster term captures the direction and
-   magnitude of each protein's difference between the two clusters.
+1. **Quantify the between-group signal.** For each protein, fit a linear
+   regression of log2 RFU on a categorical comparison variable, adjusting for
+   relevant covariates (age, sex, disease status, ancestry PCs, assay batch).
+   In the simplest case this is a binary contrast, but the grouping variable
+   does not have to come from clustering. It can represent clusters, site,
+   plate, processing group, or another experimental condition. The resulting
+   beta coefficient for the selected contrast captures the direction and
+   magnitude of each protein's difference between the two groups being compared.
 
 2. **Compare to the processing-sensitive protein lists.** For each processing
    condition, plot the known processing-induced log2 fold change (x-axis)
-   against the observed between-cluster beta coefficient (y-axis).
+   against the observed between-group beta coefficient (y-axis).
 
-3. **Interpret the concordance.** If a processing condition is responsible for
-   the clustering, its sensitive proteins should fall predominantly in
-   quadrants I (both positive) and III (both negative) of this plot — meaning
-   proteins that go up under that processing condition are also more abundant
-   in one cluster, and proteins that go down are less abundant in that cluster.
-   A pattern scattered across all four quadrants indicates that condition is
-   not the driver.
+3. **Interpret the concordance.** If a processing condition explains the
+   separation between the two groups, its sensitive proteins should fall
+   predominantly in quadrants I (both positive) and III (both negative) of this
+   plot — meaning proteins that go up under that processing condition are also
+   more abundant in one group, and proteins that go down are less abundant in
+   that same group. A pattern scattered across all four quadrants indicates
+   that condition is not the driver.
 
 ### Example
 
@@ -160,8 +165,12 @@ disease status or technical batch effects — is responsible for the clustering.
 
 To run this diagnostic in your own dataset you need:
 
-- **Log2-transformed SomaScan data** with a cluster assignment column
-  (`Big` / `Small`, or equivalent) obtained from a prior clustering step.
+- **Log2-transformed SomaScan data** with a categorical comparison variable.
+  A cluster label (`Big` / `Small`) is one example, but clustering is not a
+  prerequisite. The same diagnostic can be used to compare site, plate,
+  processing group, or another experimental condition. For the plotted
+  diagnostic, the comparison should be a defined binary contrast or a selected
+  coefficient from a multi-level categorical variable.
 - **SomaLogic processing-sensitive protein lists** (CSV format, one file per
   condition). These are available from SomaLogic upon request and should be
   placed in the `data/` directory of this repository. They are excluded from
@@ -188,7 +197,9 @@ after fasting were lower in that same cluster.
 After seeing that pattern, the next useful step is to turn the protein-level
 signal into a sample-level score. The goal of the score is simple: for each
 sample, estimate how strongly its protein profile looks like the fasted
-pattern described by the SomaLogic fed-fasted experiment.
+pattern described by the SomaLogic fed-fasted experiment. This is consistent
+with SOMAScan work showing that nutrient state can shift serum protein profiles
+[@han2021nutrient].
 
 ### Score Definition
 
@@ -211,10 +222,6 @@ gets a positive weight, while a protein that decreases after fasting gets a
 negative weight. In this way, both types of proteins contribute in the same
 biological direction to the final score.
 
-The early analysis used a short top-10 protein list because that was the only
-list available at first. That approach is not used here. The focused workflow
-below assumes the full fed-fasted sensitive protein table is available.
-
 ### Strategy 1: Effect-Size Thresholding
 
 The first strategy is to keep fed-fasted proteins with stronger SomaLogic
@@ -226,10 +233,10 @@ $$
 |\beta_p| \geq c
 $$
 
-where `c` is the chosen effect-size cutoff. In the report analysis, I scanned
-several cutoffs based on the distribution of `abs(Time_12_hours)` and compared
-the resulting score to the major PCA axis that captured the unexplained
-sample split. The score remained strong when proteins with
+where `c` is the chosen effect-size cutoff. In this example, I scanned several
+cutoffs based on the distribution of `abs(Time_12_hours)` and compared the
+resulting score to the major PCA axis that captured the unexplained sample
+split. The score remained strong when proteins with
 `abs(Time_12_hours) >= 0.25` were used, while weaker-effect proteins were more
 likely to add noise. For that reason, `0.25` is a practical default for this
 example, not a universal rule.
@@ -245,17 +252,19 @@ highly correlated proteins. This is similar in spirit to clumping in PLINK.
 In polygenic risk score analysis, clumping keeps the strongest genetic
 variant in a correlated group and removes nearby variants that are in high
 linkage disequilibrium. The aim is to keep the strongest signal without
-counting the same correlated information many times.
+counting the same correlated information many times [@chang2015plink].
 
 Here the objects are proteins rather than genetic variants, so there is no
-genomic window. Instead, I rank proteins by the absolute value of their
-SomaLogic fed-fasted effect size and remove proteins that are highly
-correlated with a protein already selected for the score. The algorithm is:
+genomic window. Instead, I rank proteins by the absolute log2 fold change in
+the SomaLogic `Time_12_hours` column. At each step, the protein with the
+largest remaining `abs(Time_12_hours)` value is kept, and proteins that are
+highly correlated with that selected protein are removed. The algorithm is:
 
 1. Start with fed-fasted proteins with non-missing `Time_12_hours`.
-2. Select the remaining protein with the largest `abs(Time_12_hours)`.
-3. Remove other remaining proteins whose expression correlation with that
-   selected protein is above the chosen threshold.
+2. From the proteins still available, select the one with the largest absolute
+   `Time_12_hours` log2 fold change (`abs(Time_12_hours)`).
+3. Remove any other available proteins that are too strongly correlated with
+   the selected protein, using the chosen correlation threshold.
 4. Repeat until no proteins remain.
 5. Calculate the same weighted score using only the retained proteins.
 
@@ -269,7 +278,10 @@ all sites except Denver. That choice matters. Denver is the site where the
 fed-fasted-like split was most visible, so including Denver when estimating
 protein-protein correlations can make proteins look correlated because of the
 very artifact we are trying to measure. Using the non-Denver samples gives a
-cleaner reference for deciding which proteins are redundant.
+cleaner reference for deciding which proteins are redundant. In other settings,
+the same correlation structure could also be estimated from publicly available
+healthy-control SomaScan data, if the assay version and protein annotations are
+compatible with the study being analyzed.
 
 Several correlation thresholds can be tried, such as `0.60`, `0.75`, `0.80`,
 and `0.90`. A lower threshold gives a smaller and less redundant protein set;
@@ -374,8 +386,8 @@ plot_independent_correlation(cor_threshold = 0.95)
 Once the score is calculated, I use it as a QC summary of the fed-fasted
 signal. A two-component Gaussian mixture model can be fit to the score to
 identify samples with higher fasted-like signal versus lower fasted-like
-signal. Those labels can then be compared to PCA clusters, collection site,
-and other metadata.
+signal [@benaglia2009mixtools]. Those labels can then be compared to PCA
+clusters, collection site, and other metadata.
 
 The plots below show the GMM fit for each score. The histogram shows the
 score distribution, the black curves show the two fitted mixture components,
@@ -502,14 +514,14 @@ the differential expression analysis. The data here are already normalized
 SomaScan RFU values on the log2 scale, so we can use linear modeling methods
 directly on the protein abundance matrix.
 
-This is where `limma` is still a reasonable baseline model. We are not using
-`voom` here because `voom` was designed mainly for RNA-seq-style count data,
-where the mean-variance relationship is tied to count sampling and negative
-binomial-like behavior. SomaScan RFU values are not read counts. After the
-SomaScan normalization steps and log2 transformation, the working data are
-continuous protein abundance measurements, so the ordinary limma linear model
-with empirical Bayes variance moderation is appropriate as a fixed-effect
-baseline.
+This is where `limma` is still a reasonable baseline model
+[@ritchie2015limma]. We are not using `voom` here because `voom` was designed
+mainly for RNA-seq-style count data, where the mean-variance relationship is
+tied to count sampling and negative binomial-like behavior [@law2014voom].
+SomaScan RFU values are not read counts. After the SomaScan normalization steps
+and log2 transformation, the working data are continuous protein abundance
+measurements, so the ordinary limma linear model with empirical Bayes variance
+moderation is appropriate as a fixed-effect baseline.
 
 However, this study includes samples from multiple sites. We saw earlier that
 site contributed a large amount of structure to the proteomic data. A fixed
@@ -527,17 +539,18 @@ That script was organized from the older development scripts and contains:
 - `fit_dream_model()` for the mixed-effect Dream analysis with site as a
   random effect.
 - `fit_lmer_test_model()` for a per-protein `lmerTest` comparison model.
-- `fit_lmer_seq_model()` as an optional placeholder for the `lmerSeq`
-  comparison used in the development report.
-- `run_dream_indep075_filter()` for the worked example used below.
-- `volcano_break_axis()` and `plot_indep075_dream_volcano()` for the volcano
-  plot.
+- `fit_lmer_seq_model()` as an optional placeholder for an `lmerSeq`
+  comparison model.
+- `run_dream_all_samples()` and `run_dream_indep075_filter()` for the worked
+  comparison used below.
+- `volcano_break_axis()`, `plot_all_samples_dream_volcano()`, and
+  `plot_indep075_dream_volcano()` for the volcano plots.
 
-We compared these approaches in the full analysis report. The important
-pattern was that modeling site as a random effect improved the signal compared
-with the fixed-effect limma baseline. Among the random-effect approaches,
-Dream was the most useful for this workflow because it combines linear mixed
-models with limma-style empirical Bayes moderation.
+The important pattern from testing these approaches was that modeling site as
+a random effect improved the signal compared with the fixed-effect limma
+baseline. Among the random-effect approaches, Dream was the most useful for
+this workflow because it combines linear mixed models with limma-style
+empirical Bayes moderation [@hoffman2021dream].
 
 We also used split eBayes in the Dream framework. SomaScan proteins are
 measured in different dilution groups, and the technical variance structure is
@@ -545,19 +558,53 @@ not necessarily the same across those groups. Applying empirical Bayes
 moderation separately within each dilution group lets the variance borrowing
 happen within a more comparable set of measurements. In our analysis, this
 split eBayes Dream model was more powerful than the alternatives we tested.
-The longer development report was used to compare these options while building
-this focused repository; the reproducible pieces needed for the GitHub version
-are kept in the cleaned scripts above.
 
-The volcano plot below shows the focused result used in this repo: Dream with
-split eBayes after filtering samples by the independent fed-fasted score at
-correlation threshold `0.75`. IgE is an outlying signal in both dimensions: it
-has a very large log2 fold change on the x-axis and a very large
-`-log10` adjusted p-value on the y-axis. In a usual single-scale volcano plot,
-this stretches the axes so much that the remaining proteins are compressed into
-a small part of the figure. For that reason, we used a customized volcano plot
-with broken/faceted axes so that the IgE result remains visible while the rest
-of the differential-expression pattern can still be inspected.
+```{r}
+#| label: setup-de-analysis
+#| include: false
+
+source(here::here("scripts/03_de_analysis.r"))
+de_all_samples <- run_dream_all_samples()
+de_indep075 <- run_dream_indep075_filter()
+
+de_signal_count <- function(de_output, p_cutoff = 0.1, fc_cutoff = 0.25) {
+  sum(
+    de_output$results$adj.P.Val < p_cutoff &
+      abs(de_output$results$logFC) >= fc_cutoff,
+    na.rm = TRUE
+  )
+}
+
+de_all_signal_count <- de_signal_count(de_all_samples)
+de_filtered_signal_count <- de_signal_count(de_indep075)
+```
+
+The volcano plots below show the focused comparison used in this repo. The
+first plot uses all samples. The second plot uses the same Dream split-eBayes
+model after filtering samples by the independent fed-fasted score at
+correlation threshold `0.75`. This keeps the model fixed and lets us see the
+effect of removing the smaller high-score group.
+
+The point of the all-sample plot is not that it produces many significant
+proteins. It is the baseline comparison showing that, before filtering, the
+asthma differential-expression signal is relatively muted. Using the same
+display threshold shown in the volcano plots, `r de_all_signal_count` proteins
+are highlighted in the all-sample model, compared with
+`r de_filtered_signal_count` proteins after fed-fasted filtering. After
+filtering, many more biologically meaningful proteins become visible, which is
+why sample filtering was useful in this dataset.
+
+IgE is an outlying signal in both dimensions: it has a very large log2 fold
+change on the x-axis and a very large `-log10` adjusted p-value on the y-axis.
+In a usual single-scale volcano plot, this stretches the axes so much that the
+remaining proteins are compressed into a small part of the figure. For that
+reason, we used a customized volcano plot with broken/faceted axes so that the
+IgE result remains visible while the rest of the differential-expression
+pattern can still be inspected.
+
+::: {.panel-tabset}
+
+#### After Fed-Fasted Filtering
 
 ```{r}
 #| label: fig-de-dream-indep075-volcano
@@ -566,13 +613,58 @@ of the differential-expression pattern can still be inspected.
 #|   the higher-score GMM group identified from the independent fed-fasted
 #|   score at correlation threshold 0.75. The model is Dream with site as a
 #|   random effect and split empirical Bayes moderation by SomaScan dilution
-#|   group. Customized axis breaks are used because the IgE log2 fold change
-#|   and adjusted significance are much larger than the rest of the proteins.
+#|   group. After filtering, more highlighted and biologically interpretable
+#|   proteins become visible. Customized axis breaks are used because the IgE
+#|   log2 fold change and adjusted significance are much larger than the rest
+#|   of the proteins.
 #| echo: false
 #| fig-width: 10
 #| fig-height: 7
 
-source(here::here("scripts/03_de_analysis.r"))
-de_indep075 <- run_dream_indep075_filter()
 plot_indep075_dream_volcano(de_indep075)
 ```
+
+#### All Samples
+
+```{r}
+#| label: fig-de-dream-all-samples-volcano
+#| fig-cap: >
+#|   Volcano plot for Active Asthma differential expression using all samples.
+#|   The model is Dream with site as a random effect and split empirical Bayes
+#|   moderation by SomaScan dilution group. This panel is included as the
+#|   baseline comparison before fed-fasted filtering; the broader asthma signal
+#|   is relatively muted when all samples are retained. Customized axis breaks
+#|   are used because the IgE log2 fold change and adjusted significance are
+#|   much larger than the rest of the proteins.
+#| echo: false
+#| fig-width: 10
+#| fig-height: 7
+
+plot_all_samples_dream_volcano(de_all_samples)
+```
+
+:::
+
+## References {.unnumbered}
+
+::: {#refs}
+:::
+
+## Session Info {.unnumbered}
+
+::: {.callout-note collapse="true"}
+## Reproducibility Details
+
+```{r}
+#| label: session-info
+#| echo: false
+#| comment: ""
+
+if (requireNamespace("sessioninfo", quietly = TRUE)) {
+  sessioninfo::session_info()
+} else {
+  sessionInfo()
+}
+```
+
+:::

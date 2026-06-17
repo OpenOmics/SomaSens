@@ -11,8 +11,9 @@
 #   - split eBayes by SomaScan dilution group when requested
 #   - volcano plotting for model output
 #
-# The example run used by index.qmd fits Dream after filtering the
-# higher-score GMM group from the independent fed-fasted score at cor < 0.75.
+# The example runs used by index.qmd fit the same Dream split-eBayes model
+# before and after filtering the higher-score GMM group from the independent
+# fed-fasted score at cor < 0.75.
 #
 # Dependencies: tidyverse, SomaDataIO, Biobase, limma, variancePartition,
 #               lmerTest, ggrepel, ggh4x, here
@@ -34,6 +35,7 @@ source(here("scripts", "02_fedfast_scoring.r"))
 # 0. User-configurable settings
 # =============================================================================
 
+DE_CACHE_ALL_SAMPLES <- here("data", "de_dream_all_samples.rds")
 DE_CACHE_INDEP075 <- here("data", "de_dream_indep075_filter.rds")
 PHENOTYPE_COL <- "Active_Asthma"
 DEFAULT_COVARIATES <- c("Age", "Sex", "full_PC1", "full_PC2")
@@ -380,6 +382,33 @@ filter_indep075_high_score_samples <- function(adata_meta, cor_threshold = 0.75)
     filter(gmm_class_indep075 != "Higher score")
 }
 
+run_dream_all_samples <- function(cache_path = DE_CACHE_ALL_SAMPLES,
+                                  force = FALSE) {
+  if (file.exists(cache_path) && !force) {
+    return(readRDS(cache_path))
+  }
+
+  prepared_adata <- load_prepared_adata()
+
+  dream_results <- fit_dream_model(
+    adata_meta = prepared_adata,
+    phenotype_col = PHENOTYPE_COL,
+    covariates = DEFAULT_COVARIATES,
+    random_effect = DEFAULT_RANDOM_EFFECT,
+    split_eBayes = TRUE
+  )
+
+  output <- list(
+    method = "Dream split eBayes",
+    filter = "No fed-fasted filtering; all samples retained",
+    results = dream_results,
+    n_samples = nrow(prepared_adata)
+  )
+
+  saveRDS(output, cache_path)
+  output
+}
+
 run_dream_indep075_filter <- function(cache_path = DE_CACHE_INDEP075,
                                       force = FALSE) {
   if (file.exists(cache_path) && !force) {
@@ -434,12 +463,12 @@ volcano_break_axis <- function(data,
     mutate(
       p_for_plot = pmax(.data[[y]], .Machine$double.xmin),
       Significance = case_when(
-        abs(.data[[x]]) >= FCcutoff & .data[[y]] < pCutoff ~ "p-value and log2FC",
+        abs(.data[[x]]) >= FCcutoff & .data[[y]] < pCutoff ~ "p-value and log_2FC",
         abs(.data[[x]]) >= FCcutoff ~ "Log2 FC",
         .data[[y]] < pCutoff ~ "p-value",
         TRUE ~ "NS"
       ),
-      Label = ifelse(Significance == "p-value and log2FC", .data[[label]], NA_character_),
+      Label = ifelse(Significance == "p-value and log_2FC", .data[[label]], NA_character_),
       Intercept = -log10(pCutoff),
       XIntercept = ifelse(.data[[x]] < 0, -FCcutoff, FCcutoff),
       XBreak = "x",
@@ -471,14 +500,40 @@ volcano_break_axis <- function(data,
       )
   }
 
+  y_panel_count <- if (!is.null(y_breaks)) {
+    nlevels(droplevels(plot_data$YBreak))
+  } else {
+    1
+  }
+  y_panel_sizes <- case_when(
+    y_panel_count == 1 ~ list(5),
+    y_panel_count == 2 ~ list(c(1, 5)),
+    y_panel_count == 3 ~ list(c(1, 1, 5)),
+    TRUE ~ list(rep(1, y_panel_count))
+  )[[1]]
+
+  x_panel_count <- if (!is.null(x_breaks)) {
+    nlevels(droplevels(plot_data$XBreak))
+  } else {
+    1
+  }
+  x_panel_sizes <- case_when(
+    x_panel_count == 1 ~ list(5),
+    x_panel_count == 2 ~ list(c(5, 1)),
+    x_panel_count == 3 ~ list(c(5, 1, 1)),
+    TRUE ~ list(rep(1, x_panel_count))
+  )[[1]]
+
   ggplot(plot_data, aes(x = .data[[x]], y = -log10(p_for_plot))) +
-    geom_point(aes(color = Significance), alpha = 0.8, size = 1.4) +
+    geom_point(aes(color = Significance)) +
     geom_hline(aes(yintercept = Intercept), linetype = "dashed", na.rm = TRUE) +
     geom_vline(aes(xintercept = XIntercept), linetype = "dashed", na.rm = TRUE) +
-    ggrepel::geom_text_repel(aes(label = Label), max.overlaps = Inf, size = 3) +
+    ggrepel::geom_text_repel(aes(label = Label), max.overlaps = Inf) +
     facet_grid(YBreak ~ XBreak, scales = "free") +
-    ggh4x::force_panelsizes(rows = c(1, 5), cols = c(5, 1)) +
+    ggh4x::force_panelsizes(rows = y_panel_sizes, cols = x_panel_sizes) +
     theme_bw() +
+    scale_y_continuous(breaks = c(seq(0, 25, 0.5), max(-log10(plot_data$p_for_plot)))) +
+    scale_x_continuous(breaks = c(seq(-5, 5, 0.25), max(plot_data[[x]]))) +
     theme(
       panel.grid = element_blank(),
       strip.text = element_blank(),
@@ -494,16 +549,37 @@ volcano_break_axis <- function(data,
     )
 }
 
-plot_indep075_dream_volcano <- function(de_output = run_dream_indep075_filter()) {
+plot_dream_volcano <- function(de_output,
+                               title,
+                               subtitle,
+                               y_breaks = c(3, 17)) {
   volcano_break_axis(
     data = de_output$results,
     x = "logFC",
     y = "adj.P.Val",
     label = "Target",
+    y_breaks = y_breaks,
     pCutoff = 0.1,
     FCcutoff = 0.25,
+    title = title,
+    subtitle = subtitle,
+    caption = "Proteins are highlighted and labeled when adjusted p-value < 0.1 and |log2FC| >= 0.25."
+  )
+}
+
+plot_all_samples_dream_volcano <- function(de_output = run_dream_all_samples()) {
+  plot_dream_volcano(
+    de_output = de_output,
+    title = "Active Asthma DE before fed-fasted filtering",
+    subtitle = "Dream split eBayes; all samples retained",
+    y_breaks = c(4, 17)
+  )
+}
+
+plot_indep075_dream_volcano <- function(de_output = run_dream_indep075_filter()) {
+  plot_dream_volcano(
+    de_output = de_output,
     title = "Active Asthma DE after fed-fasted filtering",
-    subtitle = "Dream split eBayes; independent score cor < 0.75; higher-score GMM group removed",
-    caption = "Proteins are highlighted when adjusted p-value < 0.1 and |log2FC| >= 0.25."
+    subtitle = "Dream split eBayes; independent score cor < 0.75; higher-score GMM group removed"
   )
 }

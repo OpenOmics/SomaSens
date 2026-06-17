@@ -25,15 +25,31 @@ GitHub. Place those files under `data/` as described in `data/README.md`.
 
 ## Render The Documentation
 
-From the repository root:
+The report source is `scripts/index.qmd`. Use the helper script from the
+repository root to render both shareable outputs from the same source:
 
 ```bash
-quarto render scripts/index.qmd --output-dir ../docs --cache-refresh
+./scripts/render_reports.sh
 ```
 
-The command writes the GitHub Pages-ready HTML to `docs/index.html`. The
-rendered HTML is committed so the site can be served directly from the
-`main` branch using the `/docs` folder.
+This updates:
+
+- `docs/index.html`: the GitHub Pages-ready HTML. This file can stay committed
+  so the site can be served from the `main` branch using the `/docs` folder when
+  GitHub Pages is enabled.
+- `SomaSens_standalone.html`: a single-file HTML report for sharing privately
+  with collaborators while the repository or GitHub Pages site is not public.
+  This file is intentionally ignored by git.
+
+To render only one output:
+
+```bash
+./scripts/render_reports.sh docs
+./scripts/render_reports.sh standalone
+```
+
+The standalone report is rendered with embedded resources and MathML so it can
+be opened directly in a browser as a local HTML file.
 
 ## Setup
 
