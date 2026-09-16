@@ -6,9 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Practical guidance for recognizing, preventing, and handling pre-analytical and technical variation in SomaScan proteomics studies.">
+<meta name="description" content="Planned SomaSens guidance for transparent, matrix-aware SOMAmer filtering in cerebrospinal fluid data.">
 
-<title>SomaSens | Practical guidance for SomaScan studies – SomaSens</title>
+<title>Filtering SOMAmers for CSF analyses – SomaSens</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -21,27 +21,7 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for citations */
-div.csl-bib-body { }
-div.csl-entry {
-  clear: both;
-  margin-bottom: 0em;
-}
-.hanging-indent div.csl-entry {
-  margin-left:2em;
-  text-indent:-2em;
-}
-div.csl-left-margin {
-  min-width:2em;
-  float:left;
-}
-div.csl-right-inline {
-  margin-left:2em;
-  padding-left:1em;
-}
-div.csl-indent {
-  margin-left: 2em;
-}</style>
+</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -113,7 +93,7 @@ div.csl-indent {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="./index.html"> 
 <span class="menu-text">Overview</span></a>
   </li>  
   <li class="nav-item">
@@ -125,7 +105,7 @@ div.csl-indent {
 <span class="menu-text">Plate randomization</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./csf-somamer-filtering.html"> 
+    <a class="nav-link active" href="./csf-somamer-filtering.html" aria-current="page"> 
 <span class="menu-text">CSF SOMAmer filtering</span></a>
   </li>  
 </ul>
@@ -143,95 +123,142 @@ div.csl-indent {
     </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#planned-scope" id="toc-planned-scope" class="nav-link active" data-scroll-target="#planned-scope">Planned scope</a></li>
+  <li><a href="#proposed-reporting-pattern" id="toc-proposed-reporting-pattern" class="nav-link" data-scroll-target="#proposed-reporting-pattern">Proposed reporting pattern</a></li>
+  <li><a href="#what-to-add-next" id="toc-what-to-add-next" class="nav-link" data-scroll-target="#what-to-add-next">What to add next</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/spaul-genetics/SomaSens/blob/main/csf-somamer-filtering.qmd" class="toc-action"><i class="bi bi-github"></i>View source</a></li><li><a href="https://github.com/spaul-genetics/SomaSens/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
 <!-- main -->
-<main class="content column-page" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content">
 
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Filtering SOMAmers for CSF analyses</h1>
+<p class="subtitle lead">Planned guidance</p>
+</div>
 
-
-
-<div class="hero">
-<div class="hero-kicker">
-<p>PRACTICAL SOMASCAN GUIDANCE</p>
-</div>
-<section id="better-design-before-analysis.-better-evidence-after-it." class="level1">
-<h1>Better design before analysis. Better evidence after it.</h1>
-<p>SomaSens is a growing collection of practical notes for designing SomaScan studies, recognizing unwanted variation, and making defensible analysis decisions.</p>
-<p><a href="./scripts/index.html" class="btn btn-primary btn-lg">Explore pre-analytical variation</a> <a href="./randomization.html" class="btn btn-outline-primary btn-lg">Plan plate randomization</a></p>
-</section>
-</div>
-<section id="why-this-matters" class="level2">
-<h2 class="anchored" data-anchor-id="why-this-matters">Why this matters</h2>
-<p>SomaScan measurements can be sensitive to what happens before the assay, including fed-versus-fasted state, freeze-thaw history, hemolysis, and delays between collection, processing, and freezing <span class="citation" data-cites="han2021nutrient candia2025hemolysis tatsumi2026preanalytical">(<a href="#ref-han2021nutrient" role="doc-biblioref">Han et al. 2021</a>; <a href="#ref-candia2025hemolysis" role="doc-biblioref">Candia et al. 2025</a>; <a href="#ref-tatsumi2026preanalytical" role="doc-biblioref">Tatsumi et al. 2026</a>)</span>. If these factors differ systematically between study groups, they can create broad protein shifts, unexplained sample clusters, or misleading associations.</p>
-<p>Known processing-sensitive protein signatures can sometimes help diagnose the source of a problem. The current detailed report shows how to compare an observed between-group signal with those signatures and how to calculate a sample-level fed-fasted score.</p>
-<section id="the-practical-conclusion" class="level3 takeaway">
-<h3 class="anchored" data-anchor-id="the-practical-conclusion">The practical conclusion</h3>
-<p>Diagnosis does not guarantee that the affected measurements can be repaired. When a processing effect is large, excluding a clearly defined set of affected samples may be more defensible than relying on statistical adjustment alone, although filtering also reduces power and can introduce selection bias. The best protection is consistent sample preparation, balanced study design, and a complete record of what happened to every sample.</p>
-</section>
-</section>
-<section id="guidance-in-this-site" class="level2">
-<h2 class="anchored" data-anchor-id="guidance-in-this-site">Guidance in this site</h2>
-<div class="guide-grid">
-<section id="diagnose-processing-variation" class="level4 guide-card">
-<h4 class="anchored" data-anchor-id="diagnose-processing-variation">Diagnose processing variation</h4>
-<p>Use known processing-sensitive proteins to investigate unexpected sample structure, calculate a fed-fasted score, and evaluate filtering decisions.</p>
-<p><a href="./scripts/index.html">Read the detailed report →</a></p>
-</section>
-<section id="randomize-samples-over-plates" class="level4 guide-card">
-<h4 class="anchored" data-anchor-id="randomize-samples-over-plates">Randomize samples over plates</h4>
-<p>See good and bad allocation patterns and learn why assay QC and normalization cannot rescue a design in which biology is confounded with plate or well position.</p>
-<p><a href="./randomization.html">View the design guide →</a></p>
-</section>
-<section id="filter-somamers-for-csf" class="level4 guide-card guide-card-planned">
-<h4 class="anchored" data-anchor-id="filter-somamers-for-csf">Filter SOMAmers for CSF</h4>
-<p>A future guide will document matrix-aware criteria for choosing SOMAmers in cerebrospinal fluid analyses, with transparent reasons for every exclusion.</p>
-<p><a href="./csf-somamer-filtering.html">See the planned scope →</a></p>
-</section>
-</div>
-</section>
-<section id="a-simple-working-principle" class="level2">
-<h2 class="anchored" data-anchor-id="a-simple-working-principle">A simple working principle</h2>
-<div class="principle-row">
-<div class="principle-step">
-<p><span class="step-number">1</span></p>
-<p><strong>Prevent</strong></p>
-<p>Standardize collection and processing wherever possible.</p>
-</div>
-<div class="principle-step">
-<p><span class="step-number">2</span></p>
-<p><strong>Record</strong></p>
-<p>Keep sample-level times, handling events, storage history, plate, and well.</p>
-</div>
-<div class="principle-step">
-<p><span class="step-number">3</span></p>
-<p><strong>Balance</strong></p>
-<p>Distribute biological groups across plates and available well positions.</p>
-</div>
-<div class="principle-step">
-<p><span class="step-number">4</span></p>
-<p><strong>Diagnose</strong></p>
-<p>Inspect structure before testing the primary biological hypothesis.</p>
-</div>
+<div>
+  <div class="description">
+    Planned SomaSens guidance for transparent, matrix-aware SOMAmer filtering in cerebrospinal fluid data.
+  </div>
 </div>
 
 
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>This page is a scaffold
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The CSF filtering analysis is not yet included. This page reserves its place in the site and defines the questions the eventual report should answer without presenting unfinished recommendations as established results.</p>
+</div>
+</div>
+<section id="planned-scope" class="level2">
+<h2 class="anchored" data-anchor-id="planned-scope">Planned scope</h2>
+<p>The guide will document a reproducible, version-aware approach to SOMAmer filtering for cerebrospinal fluid analyses. It will distinguish assay-level quality control from study-specific filtering and provide a reason for every analyte retained or excluded.</p>
+<p>Planned topics include:</p>
+<ul>
+<li>the assay version and stable SOMAmer identifiers used for matching;</li>
+<li>matrix suitability and detectability in CSF;</li>
+<li>technical reproducibility and missing or flagged measurements;</li>
+<li>evidence relevant to specificity, cross-reactivity, or off-target binding;</li>
+<li>sensitivity to blood contamination or other pre-analytical factors;</li>
+<li>treatment of duplicate or multiple reagents targeting the same protein;</li>
+<li>sensitivity analyses using broader and narrower SOMAmer sets; and</li>
+<li>an exportable inclusion table with one row per SOMAmer and explicit reason codes.</li>
+</ul>
+</section>
+<section id="proposed-reporting-pattern" class="level2">
+<h2 class="anchored" data-anchor-id="proposed-reporting-pattern">Proposed reporting pattern</h2>
+<p>The final report should make attrition visible:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Stage</th>
+<th>Question</th>
+<th>Output to retain</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Starting panel</td>
+<td>Which assay version and reagents were delivered?</td>
+<td>Complete manifest</td>
+</tr>
+<tr class="even">
+<td>Technical screen</td>
+<td>Which measurements fail predefined technical criteria?</td>
+<td>Flags and thresholds</td>
+</tr>
+<tr class="odd">
+<td>CSF screen</td>
+<td>Which criteria are specific to the CSF matrix or this study?</td>
+<td>Evidence and reason codes</td>
+</tr>
+<tr class="even">
+<td>Analysis set</td>
+<td>Which SOMAmers enter the primary analysis?</td>
+<td>Versioned inclusion list</td>
+</tr>
+<tr class="odd">
+<td>Sensitivity sets</td>
+<td>Do conclusions depend on uncertain exclusions?</td>
+<td>Alternate inclusion lists</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Plasma-derived filtering rules should not be transferred to CSF without checking whether their rationale applies to the CSF matrix, assay version, and scientific question.</p>
+</div>
+</div>
+</section>
+<section id="what-to-add-next" class="level2">
+<h2 class="anchored" data-anchor-id="what-to-add-next">What to add next</h2>
+<p>When the findings are ready, this page can be expanded with the filtering code, the source and date of each criterion, an attrition figure, and examples showing how the choice of SOMAmer set affects downstream results.</p>
+
 
 </section>
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
-<div id="ref-candia2025hemolysis" class="csl-entry" role="listitem">
-Candia, Julian, Giovanna Fantoni, Ruin Moaddel, Francheska Delgado-Peraza, Nader Shehadeh, Toshiko Tanaka, and Luigi Ferrucci. 2025. <span>“Effects of in Vitro Hemolysis and Repeated Freeze-Thaw Cycles in Protein Abundance Quantification Using the <span>SomaScan</span> and <span>Olink</span> Assays.”</span> <em>Journal of Proteome Research</em> 24 (5): 2517–28. <a href="https://doi.org/10.1021/acs.jproteome.5c00069">https://doi.org/10.1021/acs.jproteome.5c00069</a>.
-</div>
-<div id="ref-han2021nutrient" class="csl-entry" role="listitem">
-Han, Kim, Komudi Singh, Matthew J. Rodman, Shahin Hassanzadeh, Yvonne Baumer, Rebecca D. Huffstutler, Jinguo Chen, et al. 2021. <span>“Identification and Validation of Nutrient State-Dependent Serum Protein Mediators of Human <span>CD4+</span> t Cell Responsiveness.”</span> <em>Nutrients</em> 13 (5): 1492. <a href="https://doi.org/10.3390/nu13051492">https://doi.org/10.3390/nu13051492</a>.
-</div>
-<div id="ref-tatsumi2026preanalytical" class="csl-entry" role="listitem">
-Tatsumi, Megumi, Tomoko Miyakawa, Takako Enokida, Haruna Kaneko, Kosuke Saito, Shinsuke Hidese, Yuji Takahashi, Yuichi Goto, Hiroshi Kunugi, and Kotaro Hattori. 2026. <span>“The Effect of Preanalytical Factors on Cerebrospinal Fluid and Plasma Proteomics: A Systematic Experimental Study.”</span> <em>Clinical Proteomics</em>. <a href="https://doi.org/10.1186/s12014-026-09604-5">https://doi.org/10.1186/s12014-026-09604-5</a>.
-</div>
-</div></section></div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
@@ -645,7 +672,7 @@ Tatsumi, Megumi, Tomoko Miyakawa, Takako Enokida, Haruna Kaneko, Kosuke Saito, S
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions"><ul><li><a href="https://github.com/spaul-genetics/SomaSens/blob/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>View source</a></li><li><a href="https://github.com/spaul-genetics/SomaSens/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/spaul-genetics/SomaSens/blob/main/csf-somamer-filtering.qmd" class="toc-action"><i class="bi bi-github"></i>View source</a></li><li><a href="https://github.com/spaul-genetics/SomaSens/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
 <p>Built with <a href="https://quarto.org/">Quarto</a></p>
 </div>

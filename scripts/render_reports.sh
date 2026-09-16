@@ -15,21 +15,21 @@ esac
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_dir="$(cd "${script_dir}/.." && pwd)"
 
-cd "${script_dir}"
-
 if [[ "${target}" == "all" || "${target}" == "docs" ]]; then
-  echo "Rendering GitHub Pages report: ${repo_dir}/docs/index.html"
-  quarto render index.qmd --output-dir ../docs --cache-refresh
+  echo "Rendering GitHub Pages site: ${repo_dir}/docs/"
+  cd "${repo_dir}"
+  quarto render --cache-refresh
 fi
 
 if [[ "${target}" == "all" || "${target}" == "standalone" ]]; then
-  echo "Rendering standalone collaborator report: ${repo_dir}/SomaSens_standalone.html"
-  quarto render index.qmd \
-    --output SomaSens_standalone.html \
-    --cache-refresh \
-    -M html-math-method:mathml
+  if [[ "${target}" == "standalone" ]]; then
+    echo "Rendering detailed report for standalone export"
+    cd "${repo_dir}"
+    quarto render scripts/index.qmd --cache-refresh
+  fi
 
-  mv SomaSens_standalone.html "${repo_dir}/SomaSens_standalone.html"
+  echo "Creating standalone collaborator report: ${repo_dir}/SomaSens_standalone.html"
+  cp "${repo_dir}/docs/scripts/index.html" "${repo_dir}/SomaSens_standalone.html"
 fi
 
 echo "Done."

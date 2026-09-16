@@ -6,9 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Practical guidance for recognizing, preventing, and handling pre-analytical and technical variation in SomaScan proteomics studies.">
+<meta name="description" content="Good and bad examples of allocating SomaScan samples across plates and well positions.">
 
-<title>SomaSens | Practical guidance for SomaScan studies – SomaSens</title>
+<title>Randomizing samples over plates – SomaSens</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -113,7 +113,7 @@ div.csl-indent {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="./index.html"> 
 <span class="menu-text">Overview</span></a>
   </li>  
   <li class="nav-item">
@@ -121,7 +121,7 @@ div.csl-indent {
 <span class="menu-text">Processing variation</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./randomization.html"> 
+    <a class="nav-link active" href="./randomization.html" aria-current="page"> 
 <span class="menu-text">Plate randomization</span></a>
   </li>  
   <li class="nav-item">
@@ -143,95 +143,212 @@ div.csl-indent {
     </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#bad-design-group-and-plate-are-confounded" id="toc-bad-design-group-and-plate-are-confounded" class="nav-link active" data-scroll-target="#bad-design-group-and-plate-are-confounded">Bad design: group and plate are confounded</a></li>
+  <li><a href="#bad-design-plate-is-balanced-position-is-not" id="toc-bad-design-plate-is-balanced-position-is-not" class="nav-link" data-scroll-target="#bad-design-plate-is-balanced-position-is-not">Bad design: plate is balanced, position is not</a></li>
+  <li><a href="#better-design-blocked-balanced-and-randomized" id="toc-better-design-blocked-balanced-and-randomized" class="nav-link" data-scroll-target="#better-design-blocked-balanced-and-randomized">Better design: blocked, balanced, and randomized</a></li>
+  <li><a href="#what-to-balance" id="toc-what-to-balance" class="nav-link" data-scroll-target="#what-to-balance">What to balance</a></li>
+  <li><a href="#recommended-workflow" id="toc-recommended-workflow" class="nav-link" data-scroll-target="#recommended-workflow">Recommended workflow</a></li>
+  <li><a href="#minimum-metadata-to-retain" id="toc-minimum-metadata-to-retain" class="nav-link" data-scroll-target="#minimum-metadata-to-retain">Minimum metadata to retain</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/spaul-genetics/SomaSens/blob/main/randomization.qmd" class="toc-action"><i class="bi bi-github"></i>View source</a></li><li><a href="https://github.com/spaul-genetics/SomaSens/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
 <!-- main -->
-<main class="content column-page" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content">
 
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Randomizing samples over plates</h1>
+<p class="subtitle lead">Protect the biological comparison before the assay begins</p>
+</div>
 
-
-
-<div class="hero">
-<div class="hero-kicker">
-<p>PRACTICAL SOMASCAN GUIDANCE</p>
-</div>
-<section id="better-design-before-analysis.-better-evidence-after-it." class="level1">
-<h1>Better design before analysis. Better evidence after it.</h1>
-<p>SomaSens is a growing collection of practical notes for designing SomaScan studies, recognizing unwanted variation, and making defensible analysis decisions.</p>
-<p><a href="./scripts/index.html" class="btn btn-primary btn-lg">Explore pre-analytical variation</a> <a href="./randomization.html" class="btn btn-outline-primary btn-lg">Plan plate randomization</a></p>
-</section>
-</div>
-<section id="why-this-matters" class="level2">
-<h2 class="anchored" data-anchor-id="why-this-matters">Why this matters</h2>
-<p>SomaScan measurements can be sensitive to what happens before the assay, including fed-versus-fasted state, freeze-thaw history, hemolysis, and delays between collection, processing, and freezing <span class="citation" data-cites="han2021nutrient candia2025hemolysis tatsumi2026preanalytical">(<a href="#ref-han2021nutrient" role="doc-biblioref">Han et al. 2021</a>; <a href="#ref-candia2025hemolysis" role="doc-biblioref">Candia et al. 2025</a>; <a href="#ref-tatsumi2026preanalytical" role="doc-biblioref">Tatsumi et al. 2026</a>)</span>. If these factors differ systematically between study groups, they can create broad protein shifts, unexplained sample clusters, or misleading associations.</p>
-<p>Known processing-sensitive protein signatures can sometimes help diagnose the source of a problem. The current detailed report shows how to compare an observed between-group signal with those signatures and how to calculate a sample-level fed-fasted score.</p>
-<section id="the-practical-conclusion" class="level3 takeaway">
-<h3 class="anchored" data-anchor-id="the-practical-conclusion">The practical conclusion</h3>
-<p>Diagnosis does not guarantee that the affected measurements can be repaired. When a processing effect is large, excluding a clearly defined set of affected samples may be more defensible than relying on statistical adjustment alone, although filtering also reduces power and can introduce selection bias. The best protection is consistent sample preparation, balanced study design, and a complete record of what happened to every sample.</p>
-</section>
-</section>
-<section id="guidance-in-this-site" class="level2">
-<h2 class="anchored" data-anchor-id="guidance-in-this-site">Guidance in this site</h2>
-<div class="guide-grid">
-<section id="diagnose-processing-variation" class="level4 guide-card">
-<h4 class="anchored" data-anchor-id="diagnose-processing-variation">Diagnose processing variation</h4>
-<p>Use known processing-sensitive proteins to investigate unexpected sample structure, calculate a fed-fasted score, and evaluate filtering decisions.</p>
-<p><a href="./scripts/index.html">Read the detailed report →</a></p>
-</section>
-<section id="randomize-samples-over-plates" class="level4 guide-card">
-<h4 class="anchored" data-anchor-id="randomize-samples-over-plates">Randomize samples over plates</h4>
-<p>See good and bad allocation patterns and learn why assay QC and normalization cannot rescue a design in which biology is confounded with plate or well position.</p>
-<p><a href="./randomization.html">View the design guide →</a></p>
-</section>
-<section id="filter-somamers-for-csf" class="level4 guide-card guide-card-planned">
-<h4 class="anchored" data-anchor-id="filter-somamers-for-csf">Filter SOMAmers for CSF</h4>
-<p>A future guide will document matrix-aware criteria for choosing SOMAmers in cerebrospinal fluid analyses, with transparent reasons for every exclusion.</p>
-<p><a href="./csf-somamer-filtering.html">See the planned scope →</a></p>
-</section>
-</div>
-</section>
-<section id="a-simple-working-principle" class="level2">
-<h2 class="anchored" data-anchor-id="a-simple-working-principle">A simple working principle</h2>
-<div class="principle-row">
-<div class="principle-step">
-<p><span class="step-number">1</span></p>
-<p><strong>Prevent</strong></p>
-<p>Standardize collection and processing wherever possible.</p>
-</div>
-<div class="principle-step">
-<p><span class="step-number">2</span></p>
-<p><strong>Record</strong></p>
-<p>Keep sample-level times, handling events, storage history, plate, and well.</p>
-</div>
-<div class="principle-step">
-<p><span class="step-number">3</span></p>
-<p><strong>Balance</strong></p>
-<p>Distribute biological groups across plates and available well positions.</p>
-</div>
-<div class="principle-step">
-<p><span class="step-number">4</span></p>
-<p><strong>Diagnose</strong></p>
-<p>Inspect structure before testing the primary biological hypothesis.</p>
-</div>
+<div>
+  <div class="description">
+    Good and bad examples of allocating SomaScan samples across plates and well positions.
+  </div>
 </div>
 
 
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>SomaScan uses internal controls, calibration, quality-control samples, and several normalization steps to reduce known sources of assay variation <span class="citation" data-cites="somalogic2021standardization candia2022plasma7k">(<a href="#ref-somalogic2021standardization" role="doc-biblioref">SomaLogic, Inc. 2021</a>; <a href="#ref-candia2022plasma7k" role="doc-biblioref">Candia et al. 2022</a>)</span>. Those procedures are important, but they do not make experimental design irrelevant. Residual or unanticipated technical variation can remain, and no downstream adjustment can separate two effects that are perfectly confounded.</p>
+<p>If all cases are placed on one plate and all controls on another, for example, every case-control difference is also a plate difference. The data cannot tell which explanation is responsible. Balanced block randomization is intended to prevent this problem <span class="citation" data-cites="burger2021block">(<a href="#ref-burger2021block" role="doc-biblioref">Burger, Vaudel, and Barsnes 2021</a>)</span>.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>The design goal
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Each plate should resemble a small version of the full study. Within the wells available for study samples, spread the groups across rows, columns, edges, and the likely processing order. Preserve any assay-control positions specified by the performing laboratory.</p>
+</div>
+</div>
+<section id="bad-design-group-and-plate-are-confounded" class="level2">
+<h2 class="anchored" data-anchor-id="bad-design-group-and-plate-are-confounded">Bad design: group and plate are confounded</h2>
+<p>In this simplified example, Plate 1 contains only Group A and Plate 2 contains only Group B. A plate shift—regardless of its cause—will look exactly like a group effect.</p>
+<figure class="allocation-figure figure" aria-labelledby="bad-plate-caption">
+<div class="plate-pair">
+  <div class="plate-panel">
+    <div class="plate-title">Plate 1</div>
+    <div class="plate-grid bad-grid" aria-label="Plate 1 contains sixteen Group A samples">
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+    </div>
+  </div>
+  <div class="plate-panel">
+    <div class="plate-title">Plate 2</div>
+    <div class="plate-grid bad-grid" aria-label="Plate 2 contains sixteen Group B samples">
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+    </div>
+  </div>
+</div>
+<div class="plate-legend"><span><i class="swatch group-a"></i> Group A</span><span><i class="swatch group-b"></i> Group B</span></div>
+<figcaption id="bad-plate-caption"><strong>Bad:</strong> study group is perfectly confounded with plate. Plate adjustment cannot recover an independently estimable group effect.</figcaption>
+</figure>
+</section>
+<section id="bad-design-plate-is-balanced-position-is-not" class="level2">
+<h2 class="anchored" data-anchor-id="bad-design-plate-is-balanced-position-is-not">Bad design: plate is balanced, position is not</h2>
+<p>Putting both groups on every plate is necessary, but not always sufficient. Here, Group A always occupies the first two rows and Group B the last two rows. Any row, edge, timing, or pipetting-order effect can still align with the biological comparison.</p>
+<figure class="allocation-figure figure" aria-labelledby="bad-position-caption">
+<div class="plate-pair">
+  <div class="plate-panel">
+    <div class="plate-title">Plate 1</div>
+    <div class="plate-grid bad-grid" aria-label="Plate 1 has Group A in the first two rows and Group B in the final two rows">
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+    </div>
+  </div>
+  <div class="plate-panel">
+    <div class="plate-title">Plate 2</div>
+    <div class="plate-grid bad-grid" aria-label="Plate 2 repeats Group A in the first two rows and Group B in the final two rows">
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+    </div>
+  </div>
+</div>
+<div class="plate-legend"><span><i class="swatch group-a"></i> Group A</span><span><i class="swatch group-b"></i> Group B</span></div>
+<figcaption id="bad-position-caption"><strong>Bad:</strong> each plate is numerically balanced, but group remains confounded with row and processing order.</figcaption>
+</figure>
+</section>
+<section id="better-design-blocked-balanced-and-randomized" class="level2">
+<h2 class="anchored" data-anchor-id="better-design-blocked-balanced-and-randomized">Better design: blocked, balanced, and randomized</h2>
+<p>In the better example, both groups appear in equal numbers on each plate and their positions change across plates. The exact map should be generated with a recorded random seed and constrained only enough to achieve balance on the important design variables. This distributes—not necessarily eliminates—any remaining technical variation.</p>
+<figure class="allocation-figure good-allocation figure" aria-labelledby="good-caption">
+<div class="plate-pair">
+  <div class="plate-panel">
+    <div class="plate-title">Plate 1</div>
+    <div class="plate-grid" aria-label="Plate 1 contains a balanced mixture of Group A and Group B samples">
+      <span class="well group-a">A</span><span class="well group-b">B</span><span class="well group-a">A</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-a">A</span><span class="well group-b">B</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-a">A</span>
+      <span class="well group-b">B</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-b">B</span>
+    </div>
+  </div>
+  <div class="plate-panel">
+    <div class="plate-title">Plate 2</div>
+    <div class="plate-grid" aria-label="Plate 2 contains a differently randomized balanced mixture of Group A and Group B samples">
+      <span class="well group-b">B</span><span class="well group-a">A</span><span class="well group-b">B</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-b">B</span><span class="well group-a">A</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-b">B</span>
+      <span class="well group-a">A</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-a">A</span>
+    </div>
+  </div>
+</div>
+<div class="plate-legend"><span><i class="swatch group-a"></i> Group A</span><span><i class="swatch group-b"></i> Group B</span></div>
+<figcaption id="good-caption"><strong>Better:</strong> every plate supports the comparison, and no group repeatedly occupies one region of the plate.</figcaption>
+</figure>
+<p>The diagrams are intentionally simplified and do not represent an operational SomaScan plate map. Use the actual list of sample wells and fixed control wells provided by the laboratory running the assay.</p>
+</section>
+<section id="what-to-balance" class="level2">
+<h2 class="anchored" data-anchor-id="what-to-balance">What to balance</h2>
+<p>Start with the variables required by the primary analysis. Depending on the study, these may include:</p>
+<ul>
+<li>primary group, treatment arm, or phenotype;</li>
+<li>collection site or cohort;</li>
+<li>sex, age band, ancestry, or another major biological stratum;</li>
+<li>visit or time point, while keeping repeated samples from the same participant linked appropriately for the study objective;</li>
+<li>collection date, freezer location, extraction batch, or other known handling factors; and</li>
+<li>technical replicates or bridge samples, when used.</li>
+</ul>
+<p>Not every variable can be perfectly balanced. Prioritize the primary contrast, avoid empty group-by-plate combinations, and involve the statistician and assay laboratory before the final map is locked.</p>
+</section>
+<section id="recommended-workflow" class="level2">
+<h2 class="anchored" data-anchor-id="recommended-workflow">Recommended workflow</h2>
+<ol type="1">
+<li><strong>Define the model first.</strong> State the primary contrast and the covariates or blocking variables that the analysis will need.</li>
+<li><strong>Obtain the operational plate template.</strong> Mark the wells reserved for assay controls and identify the actual study-sample capacity.</li>
+<li><strong>Create representative blocks.</strong> Allocate each plate approximately the same proportions of the major study groups.</li>
+<li><strong>Randomize within constraints.</strong> Randomize study samples over the available wells while checking rows, columns, edges, and processing order.</li>
+<li><strong>Audit the proposed map.</strong> Cross-tabulate every important variable against plate and, where relevant, row and column.</li>
+<li><strong>Freeze and export the map.</strong> Save the random seed, script, final plate map, deviations from the plan, and the map actually run.</li>
+<li><strong>Retain technical variables.</strong> Include plate, well, run, and relevant QC outputs in the analysis-ready metadata.</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>A useful audit question
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If one plate failed completely, would the primary biological comparison still exist in the remaining plates? If the answer is no, revisit the allocation.</p>
+</div>
+</div>
+</section>
+<section id="minimum-metadata-to-retain" class="level2">
+<h2 class="anchored" data-anchor-id="minimum-metadata-to-retain">Minimum metadata to retain</h2>
+<p>Keep, at minimum, a stable sample identifier, participant identifier, study group, collection site and time, processing timestamps, fasting state, freeze-thaw count, storage location, shipment, assay run, plate, row, column, and any departure from the planned workflow. Use explicit missing values rather than interpreting a blank as “no event.”</p>
+</section>
+<section id="references" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-burger2021block" class="csl-entry" role="listitem">
+Burger, Bram, Marc Vaudel, and Harald Barsnes. 2021. <span>“Importance of Block Randomization When Designing Proteomics Experiments.”</span> <em>Journal of Proteome Research</em> 20 (1): 122–28. <a href="https://doi.org/10.1021/acs.jproteome.0c00536">https://doi.org/10.1021/acs.jproteome.0c00536</a>.
+</div>
+<div id="ref-candia2022plasma7k" class="csl-entry" role="listitem">
+Candia, Julián, Gulzar N. Daya, Toshiko Tanaka, Luigi Ferrucci, and Keenan A. Walker. 2022. <span>“Assessment of Variability in the Plasma 7k <span>SomaScan</span> Proteomics Assay.”</span> <em>Scientific Reports</em> 12: 17147. <a href="https://doi.org/10.1038/s41598-022-22116-0">https://doi.org/10.1038/s41598-022-22116-0</a>.
+</div>
+<div id="ref-somalogic2021standardization" class="csl-entry" role="listitem">
+SomaLogic, Inc. 2021. <span>“<span>SomaScan</span> V4.0 and V4.1 Data Standardization.”</span> SL00000442 Rev 4. <a href="https://somalogic.com/wp-content/uploads/2022/07/SL00000442_Rev4_2021-07_-SomaScan-v4.0-and-v4.1-Data-Standardization.pdf">https://somalogic.com/wp-content/uploads/2022/07/SL00000442_Rev4_2021-07_-SomaScan-v4.0-and-v4.1-Data-Standardization.pdf</a>.
+</div>
+</div>
+
 
 </section>
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
-<div id="ref-candia2025hemolysis" class="csl-entry" role="listitem">
-Candia, Julian, Giovanna Fantoni, Ruin Moaddel, Francheska Delgado-Peraza, Nader Shehadeh, Toshiko Tanaka, and Luigi Ferrucci. 2025. <span>“Effects of in Vitro Hemolysis and Repeated Freeze-Thaw Cycles in Protein Abundance Quantification Using the <span>SomaScan</span> and <span>Olink</span> Assays.”</span> <em>Journal of Proteome Research</em> 24 (5): 2517–28. <a href="https://doi.org/10.1021/acs.jproteome.5c00069">https://doi.org/10.1021/acs.jproteome.5c00069</a>.
-</div>
-<div id="ref-han2021nutrient" class="csl-entry" role="listitem">
-Han, Kim, Komudi Singh, Matthew J. Rodman, Shahin Hassanzadeh, Yvonne Baumer, Rebecca D. Huffstutler, Jinguo Chen, et al. 2021. <span>“Identification and Validation of Nutrient State-Dependent Serum Protein Mediators of Human <span>CD4+</span> t Cell Responsiveness.”</span> <em>Nutrients</em> 13 (5): 1492. <a href="https://doi.org/10.3390/nu13051492">https://doi.org/10.3390/nu13051492</a>.
-</div>
-<div id="ref-tatsumi2026preanalytical" class="csl-entry" role="listitem">
-Tatsumi, Megumi, Tomoko Miyakawa, Takako Enokida, Haruna Kaneko, Kosuke Saito, Shinsuke Hidese, Yuji Takahashi, Yuichi Goto, Hiroshi Kunugi, and Kotaro Hattori. 2026. <span>“The Effect of Preanalytical Factors on Cerebrospinal Fluid and Plasma Proteomics: A Systematic Experimental Study.”</span> <em>Clinical Proteomics</em>. <a href="https://doi.org/10.1186/s12014-026-09604-5">https://doi.org/10.1186/s12014-026-09604-5</a>.
-</div>
-</div></section></div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
@@ -645,7 +762,7 @@ Tatsumi, Megumi, Tomoko Miyakawa, Takako Enokida, Haruna Kaneko, Kosuke Saito, S
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions"><ul><li><a href="https://github.com/spaul-genetics/SomaSens/blob/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>View source</a></li><li><a href="https://github.com/spaul-genetics/SomaSens/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/spaul-genetics/SomaSens/blob/main/randomization.qmd" class="toc-action"><i class="bi bi-github"></i>View source</a></li><li><a href="https://github.com/spaul-genetics/SomaSens/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
 <p>Built with <a href="https://quarto.org/">Quarto</a></p>
 </div>

@@ -1,0 +1,189 @@
+---
+title: "Randomizing samples over plates"
+subtitle: "Protect the biological comparison before the assay begins"
+description: "Good and bad examples of allocating SomaScan samples across plates and well positions."
+bibliography: references.bib
+toc: true
+---
+
+SomaScan uses internal controls, calibration, quality-control samples, and
+several normalization steps to reduce known sources of assay variation
+[@somalogic2021standardization; @candia2022plasma7k]. Those procedures are
+important, but they do not make experimental design irrelevant. Residual or
+unanticipated technical variation can remain, and no downstream adjustment can
+separate two effects that are perfectly confounded.
+
+If all cases are placed on one plate and all controls on another, for example,
+every case-control difference is also a plate difference. The data cannot tell
+which explanation is responsible. Balanced block randomization is intended to
+prevent this problem [@burger2021block].
+
+::: {.callout-important}
+## The design goal
+
+Each plate should resemble a small version of the full study. Within the wells
+available for study samples, spread the groups across rows, columns, edges, and
+the likely processing order. Preserve any assay-control positions specified by
+the performing laboratory.
+:::
+
+## Bad design: group and plate are confounded
+
+In this simplified example, Plate 1 contains only Group A and Plate 2 contains
+only Group B. A plate shift—regardless of its cause—will look exactly like a
+group effect.
+
+```{=html}
+<figure class="allocation-figure" aria-labelledby="bad-plate-caption">
+<div class="plate-pair">
+  <div class="plate-panel">
+    <div class="plate-title">Plate 1</div>
+    <div class="plate-grid bad-grid" aria-label="Plate 1 contains sixteen Group A samples">
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+    </div>
+  </div>
+  <div class="plate-panel">
+    <div class="plate-title">Plate 2</div>
+    <div class="plate-grid bad-grid" aria-label="Plate 2 contains sixteen Group B samples">
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+    </div>
+  </div>
+</div>
+<div class="plate-legend"><span><i class="swatch group-a"></i> Group A</span><span><i class="swatch group-b"></i> Group B</span></div>
+<figcaption id="bad-plate-caption"><strong>Bad:</strong> study group is perfectly confounded with plate. Plate adjustment cannot recover an independently estimable group effect.</figcaption>
+</figure>
+```
+
+## Bad design: plate is balanced, position is not
+
+Putting both groups on every plate is necessary, but not always sufficient.
+Here, Group A always occupies the first two rows and Group B the last two rows.
+Any row, edge, timing, or pipetting-order effect can still align with the
+biological comparison.
+
+```{=html}
+<figure class="allocation-figure" aria-labelledby="bad-position-caption">
+<div class="plate-pair">
+  <div class="plate-panel">
+    <div class="plate-title">Plate 1</div>
+    <div class="plate-grid bad-grid" aria-label="Plate 1 has Group A in the first two rows and Group B in the final two rows">
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+    </div>
+  </div>
+  <div class="plate-panel">
+    <div class="plate-title">Plate 2</div>
+    <div class="plate-grid bad-grid" aria-label="Plate 2 repeats Group A in the first two rows and Group B in the final two rows">
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-a">A</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-b">B</span>
+    </div>
+  </div>
+</div>
+<div class="plate-legend"><span><i class="swatch group-a"></i> Group A</span><span><i class="swatch group-b"></i> Group B</span></div>
+<figcaption id="bad-position-caption"><strong>Bad:</strong> each plate is numerically balanced, but group remains confounded with row and processing order.</figcaption>
+</figure>
+```
+
+## Better design: blocked, balanced, and randomized
+
+In the better example, both groups appear in equal numbers on each plate and
+their positions change across plates. The exact map should be generated with a
+recorded random seed and constrained only enough to achieve balance on the
+important design variables. This distributes—not necessarily eliminates—any
+remaining technical variation.
+
+```{=html}
+<figure class="allocation-figure good-allocation" aria-labelledby="good-caption">
+<div class="plate-pair">
+  <div class="plate-panel">
+    <div class="plate-title">Plate 1</div>
+    <div class="plate-grid" aria-label="Plate 1 contains a balanced mixture of Group A and Group B samples">
+      <span class="well group-a">A</span><span class="well group-b">B</span><span class="well group-a">A</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-a">A</span><span class="well group-b">B</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-a">A</span>
+      <span class="well group-b">B</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-b">B</span>
+    </div>
+  </div>
+  <div class="plate-panel">
+    <div class="plate-title">Plate 2</div>
+    <div class="plate-grid" aria-label="Plate 2 contains a differently randomized balanced mixture of Group A and Group B samples">
+      <span class="well group-b">B</span><span class="well group-a">A</span><span class="well group-b">B</span><span class="well group-a">A</span>
+      <span class="well group-a">A</span><span class="well group-b">B</span><span class="well group-a">A</span><span class="well group-b">B</span>
+      <span class="well group-b">B</span><span class="well group-a">A</span><span class="well group-a">A</span><span class="well group-b">B</span>
+      <span class="well group-a">A</span><span class="well group-b">B</span><span class="well group-b">B</span><span class="well group-a">A</span>
+    </div>
+  </div>
+</div>
+<div class="plate-legend"><span><i class="swatch group-a"></i> Group A</span><span><i class="swatch group-b"></i> Group B</span></div>
+<figcaption id="good-caption"><strong>Better:</strong> every plate supports the comparison, and no group repeatedly occupies one region of the plate.</figcaption>
+</figure>
+```
+
+The diagrams are intentionally simplified and do not represent an operational
+SomaScan plate map. Use the actual list of sample wells and fixed control wells
+provided by the laboratory running the assay.
+
+## What to balance
+
+Start with the variables required by the primary analysis. Depending on the
+study, these may include:
+
+- primary group, treatment arm, or phenotype;
+- collection site or cohort;
+- sex, age band, ancestry, or another major biological stratum;
+- visit or time point, while keeping repeated samples from the same participant
+  linked appropriately for the study objective;
+- collection date, freezer location, extraction batch, or other known handling
+  factors; and
+- technical replicates or bridge samples, when used.
+
+Not every variable can be perfectly balanced. Prioritize the primary contrast,
+avoid empty group-by-plate combinations, and involve the statistician and assay
+laboratory before the final map is locked.
+
+## Recommended workflow
+
+1. **Define the model first.** State the primary contrast and the covariates or
+   blocking variables that the analysis will need.
+2. **Obtain the operational plate template.** Mark the wells reserved for assay
+   controls and identify the actual study-sample capacity.
+3. **Create representative blocks.** Allocate each plate approximately the same
+   proportions of the major study groups.
+4. **Randomize within constraints.** Randomize study samples over the available
+   wells while checking rows, columns, edges, and processing order.
+5. **Audit the proposed map.** Cross-tabulate every important variable against
+   plate and, where relevant, row and column.
+6. **Freeze and export the map.** Save the random seed, script, final plate map,
+   deviations from the plan, and the map actually run.
+7. **Retain technical variables.** Include plate, well, run, and relevant QC
+   outputs in the analysis-ready metadata.
+
+::: {.callout-tip}
+## A useful audit question
+
+If one plate failed completely, would the primary biological comparison still
+exist in the remaining plates? If the answer is no, revisit the allocation.
+:::
+
+## Minimum metadata to retain
+
+Keep, at minimum, a stable sample identifier, participant identifier, study
+group, collection site and time, processing timestamps, fasting state,
+freeze-thaw count, storage location, shipment, assay run, plate, row, column,
+and any departure from the planned workflow. Use explicit missing values rather
+than interpreting a blank as “no event.”
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

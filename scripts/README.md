@@ -13,7 +13,9 @@ processing-sensitive protein scoring workflow.
   change thresholding and independent protein selection.
 - `03_de_analysis.r`: run differential-expression models after score-based
   filtering, including the Dream split-eBayes workflow used in the report.
-- `index.qmd`: Quarto source for the rendered GitHub Pages documentation.
+- `index.qmd`: Quarto source for the detailed pre-analytical variation page and
+  the standalone collaborator report. The website landing page and other topic
+  pages live at the repository root.
 
 The older development report and exploratory scripts are not required for the
 focused GitHub workflow. The reusable pieces have been moved into the scripts

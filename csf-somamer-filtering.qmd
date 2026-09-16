@@ -1,0 +1,58 @@
+---
+title: "Filtering SOMAmers for CSF analyses"
+subtitle: "Planned guidance"
+description: "Planned SomaSens guidance for transparent, matrix-aware SOMAmer filtering in cerebrospinal fluid data."
+toc: true
+---
+
+::: {.callout-note}
+## This page is a scaffold
+
+The CSF filtering analysis is not yet included. This page reserves its place in
+the site and defines the questions the eventual report should answer without
+presenting unfinished recommendations as established results.
+:::
+
+## Planned scope
+
+The guide will document a reproducible, version-aware approach to SOMAmer
+filtering for cerebrospinal fluid analyses. It will distinguish assay-level
+quality control from study-specific filtering and provide a reason for every
+analyte retained or excluded.
+
+Planned topics include:
+
+- the assay version and stable SOMAmer identifiers used for matching;
+- matrix suitability and detectability in CSF;
+- technical reproducibility and missing or flagged measurements;
+- evidence relevant to specificity, cross-reactivity, or off-target binding;
+- sensitivity to blood contamination or other pre-analytical factors;
+- treatment of duplicate or multiple reagents targeting the same protein;
+- sensitivity analyses using broader and narrower SOMAmer sets; and
+- an exportable inclusion table with one row per SOMAmer and explicit reason
+  codes.
+
+## Proposed reporting pattern
+
+The final report should make attrition visible:
+
+| Stage | Question | Output to retain |
+|---|---|---|
+| Starting panel | Which assay version and reagents were delivered? | Complete manifest |
+| Technical screen | Which measurements fail predefined technical criteria? | Flags and thresholds |
+| CSF screen | Which criteria are specific to the CSF matrix or this study? | Evidence and reason codes |
+| Analysis set | Which SOMAmers enter the primary analysis? | Versioned inclusion list |
+| Sensitivity sets | Do conclusions depend on uncertain exclusions? | Alternate inclusion lists |
+
+::: {.callout-warning}
+Plasma-derived filtering rules should not be transferred to CSF without
+checking whether their rationale applies to the CSF matrix, assay version, and
+scientific question.
+:::
+
+## What to add next
+
+When the findings are ready, this page can be expanded with the filtering code,
+the source and date of each criterion, an attrition figure, and examples showing
+how the choice of SOMAmer set affects downstream results.
+

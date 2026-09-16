@@ -1,0 +1,45 @@
+project:
+  type: website
+  output-dir: docs
+  resources:
+    - .nojekyll
+  render:
+    - index.qmd
+    - scripts/index.qmd
+    - randomization.qmd
+    - csf-somamer-filtering.qmd
+
+website:
+  title: "SomaSens"
+  site-url: "https://spaul-genetics.github.io/SomaSens/"
+  repo-url: "https://github.com/spaul-genetics/SomaSens"
+  repo-actions: [source, issue]
+  search: true
+  page-navigation: true
+  navbar:
+    background: light
+    left:
+      - text: "Overview"
+        href: index.qmd
+      - text: "Processing variation"
+        href: scripts/index.qmd
+      - text: "Plate randomization"
+        href: randomization.qmd
+      - text: "CSF SOMAmer filtering"
+        href: csf-somamer-filtering.qmd
+    right:
+      - icon: github
+        href: "https://github.com/spaul-genetics/SomaSens"
+        aria-label: "SomaSens on GitHub"
+  page-footer:
+    left: "SomaSens · Subrata Paul"
+    right: "Built with [Quarto](https://quarto.org/)"
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+    toc-location: right
+    smooth-scroll: true
+    link-external-newwindow: true

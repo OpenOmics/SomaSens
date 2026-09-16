@@ -1,6 +1,6 @@
 ---
-title: "SomaSens"
-subtitle: "Diagnosing and Handling Pre-Analytical Variation in SomaScan Proteomics"
+title: "Diagnosing pre-analytical variation"
+subtitle: "A detailed SomaScan workflow for processing-sensitive protein signatures, sample scoring, and filtering decisions"
 author: "Subrata Paul"
 bibliography: ../references.bib
 format:
