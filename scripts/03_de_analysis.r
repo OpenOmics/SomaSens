@@ -16,7 +16,7 @@
 # fed-fasted score at cor < 0.75.
 #
 # Dependencies: tidyverse, SomaDataIO, Biobase, limma, variancePartition,
-#               lmerTest, ggrepel, ggh4x, here
+#               lmerTest, ggh4x, here
 # =============================================================================
 
 suppressPackageStartupMessages(library(tidyverse))
@@ -25,7 +25,6 @@ suppressPackageStartupMessages(library(Biobase))
 suppressPackageStartupMessages(library(limma))
 suppressPackageStartupMessages(library(variancePartition))
 suppressPackageStartupMessages(library(lmerTest))
-suppressPackageStartupMessages(library(ggrepel))
 suppressPackageStartupMessages(library(ggh4x))
 suppressPackageStartupMessages(library(here))
 
@@ -448,7 +447,6 @@ run_dream_indep075_filter <- function(cache_path = DE_CACHE_INDEP075,
 volcano_break_axis <- function(data,
                                x = "logFC",
                                y = "adj.P.Val",
-                               label = "Target",
                                y_breaks = c(3, 17),
                                x_breaks = c(0.75, 1.75),
                                pCutoff = 0.1,
@@ -468,7 +466,6 @@ volcano_break_axis <- function(data,
         .data[[y]] < pCutoff ~ "p-value",
         TRUE ~ "NS"
       ),
-      Label = ifelse(Significance == "p-value and log_2FC", .data[[label]], NA_character_),
       Intercept = -log10(pCutoff),
       XIntercept = ifelse(.data[[x]] < 0, -FCcutoff, FCcutoff),
       XBreak = "x",
@@ -528,7 +525,6 @@ volcano_break_axis <- function(data,
     geom_point(aes(color = Significance)) +
     geom_hline(aes(yintercept = Intercept), linetype = "dashed", na.rm = TRUE) +
     geom_vline(aes(xintercept = XIntercept), linetype = "dashed", na.rm = TRUE) +
-    ggrepel::geom_text_repel(aes(label = Label), max.overlaps = Inf) +
     facet_grid(YBreak ~ XBreak, scales = "free") +
     ggh4x::force_panelsizes(rows = y_panel_sizes, cols = x_panel_sizes) +
     theme_bw() +
@@ -557,13 +553,12 @@ plot_dream_volcano <- function(de_output,
     data = de_output$results,
     x = "logFC",
     y = "adj.P.Val",
-    label = "Target",
     y_breaks = y_breaks,
     pCutoff = 0.1,
     FCcutoff = 0.25,
     title = title,
     subtitle = subtitle,
-    caption = "Proteins are highlighted and labeled when adjusted p-value < 0.1 and |log2FC| >= 0.25."
+    caption = "Proteins are highlighted when adjusted p-value < 0.1 and |log2FC| >= 0.25."
   )
 }
 

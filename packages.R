@@ -14,7 +14,6 @@ cran_packages <- c(
     "ggpmisc",
     "ggpubr",
     "ggh4x",
-    "ggrepel",
     "here",
     "lmerTest",
     "mixtools",
